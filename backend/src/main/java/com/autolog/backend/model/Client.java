@@ -25,8 +25,13 @@ public class Client {
     private String name;
 
     @Column(nullable = false, unique = true)
+    private String identificationNumber; // CC, Pasaporte, NIT, etc.
+
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
     private String phone;
+
+    
 }

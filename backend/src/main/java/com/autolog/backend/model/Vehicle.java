@@ -24,20 +24,25 @@ public class Vehicle {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private String vehicleType; // Ej: Motocicleta, Automóvil, Camioneta
+
+    @Column(nullable = false)
+    private String brand; // Ej: Kymco, Yamaha, Toyota
+
+    @Column(nullable = false)
+    private String model; // Ej: Active 110, Hilux
+
     @Column(nullable = false, unique = true)
-    private String plate; // Placa del vehículo
+    private String plate; // Placa única
+
+    @Column(nullable = false, unique = true)
+    private String chassisNumber; // Número de chasis / VIN único
 
     @Column(nullable = false)
-    private String brand; // Marca (ej. Kymco, Yamaha, etc.)
+    private Integer vehicleYear; // Año del vehículo
 
-    @Column(nullable = false)
-    private String model; // Modelo
-
-    @Column(nullable = false)
-    private Integer vehicleYear; // Año
-
-    // Relación: Muchos vehículos pueden pertenecer a un solo cliente
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", nullable = false)
-    private Client client;
+    private Client client; // Dueño del vehículo
 }
