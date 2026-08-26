@@ -1,0 +1,105 @@
+{
+  "info": {
+    "name": "AutoLog API",
+    "description": "Pruebas de clientes, vehiculos y ordenes de servicio. Ejecutar en orden.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "clientId", "value": "" },
+    { "key": "vehicleId", "value": "" },
+    { "key": "serviceOrderId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "POST - Crear cliente",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Cliente Postman\",\n  \"identificationNumber\": \"{{$timestamp}}\",\n  \"email\": \"postman-{{$timestamp}}@email.com\",\n  \"phone\": \"3000000000\"\n}"
+        },
+        "url": "{{baseUrl}}/api/clients"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "exec": [
+            "pm.test('Cliente creado', function () { pm.response.to.have.status(201); });",
+            "pm.collectionVariables.set('clientId', pm.response.json().id);"
+          ],
+          "type": "text/javascript"
+        }
+      }]
+    },
+    {
+      "name": "GET - Listar clientes",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/clients" }
+    },
+    {
+      "name": "GET - Buscar cliente creado",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/clients/{{clientId}}" }
+    },
+    {
+      "name": "POST - Crear vehiculo",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"vehicleType\": \"Automovil\",\n  \"brand\": \"Toyota\",\n  \"model\": \"Corolla\",\n  \"plate\": \"POST{{$timestamp}}\",\n  \"chassisNumber\": \"VIN{{$timestamp}}\",\n  \"vehicleYear\": 2024,\n  \"client\": {\n    \"id\": {{clientId}}\n  }\n}"
+        },
+        "url": "{{baseUrl}}/api/vehicles"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "exec": [
+            "pm.test('Vehiculo creado', function () { pm.response.to.have.status(201); });",
+            "pm.collectionVariables.set('vehicleId', pm.response.json().id);"
+          ],
+          "type": "text/javascript"
+        }
+      }]
+    },
+    {
+      "name": "GET - Listar vehiculos",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/vehicles" }
+    },
+    {
+      "name": "GET - Buscar vehiculo creado",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/vehicles/{{vehicleId}}" }
+    },
+    {
+      "name": "POST - Crear orden de servicio",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"entryDate\": \"2026-08-25\",\n  \"primaryReason\": \"Revision general\",\n  \"currentMileage\": 10000,\n  \"customerObservations\": \"Prueba desde Postman\",\n  \"vehicle\": {\n    \"id\": {{vehicleId}}\n  }\n}"
+        },
+        "url": "{{baseUrl}}/api/service-orders"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "exec": [
+            "pm.test('Orden creada', function () { pm.response.to.have.status(201); });",
+            "pm.collectionVariables.set('serviceOrderId', pm.response.json().id);"
+          ],
+          "type": "text/javascript"
+        }
+      }]
+    },
+    {
+      "name": "GET - Listar ordenes",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/service-orders" }
+    },
+    {
+      "name": "GET - Buscar orden creada",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/service-orders/{{serviceOrderId}}" }
+    }
+  ]
+}
