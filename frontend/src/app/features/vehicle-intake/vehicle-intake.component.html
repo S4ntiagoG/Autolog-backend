@@ -1,0 +1,179 @@
+<main class="min-h-screen bg-neutral-950 px-4 py-6 text-neutral-100 sm:px-6 lg:px-10 lg:py-10">
+  <div class="mx-auto max-w-6xl">
+    <header class="mb-8 flex flex-wrap items-end justify-between gap-5">
+      <div>
+        <p class="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-red-500">AUTOLOG by CICLO MOTOR</p>
+        <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">Vehicle Intake</h1>
+        <p class="mt-2 max-w-2xl text-sm text-neutral-400">Registra los datos del vehículo y deja constancia de sus condiciones de recepción.</p>
+      </div>
+      <a routerLink="/vehicles" class="rounded-lg border border-neutral-700 px-4 py-2.5 text-sm font-semibold text-neutral-300 transition hover:border-neutral-500 hover:text-white">
+        Ver vehículos
+      </a>
+    </header>
+
+    @if (successMessage()) {
+      <div role="status" class="mb-6 rounded-xl border border-emerald-800 bg-emerald-950/50 p-4 text-sm text-emerald-200">
+        {{ successMessage() }}
+      </div>
+    }
+    @if (errorMessage()) {
+      <div role="alert" class="mb-6 rounded-xl border border-red-900 bg-red-950/50 p-4 text-sm text-red-200">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <div class="space-y-6">
+        <section formGroupName="vehicle" class="rounded-2xl border border-neutral-800 bg-neutral-900 p-5 shadow-2xl shadow-black/10 sm:p-7">
+          <div class="mb-6 flex items-start gap-3">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-950 text-sm font-bold text-red-400">01</span>
+            <div>
+              <h2 class="text-lg font-semibold">Vehicle Identification</h2>
+              <p class="mt-1 text-sm text-neutral-400">Datos técnicos de la unidad que ingresa al taller.</p>
+            </div>
+          </div>
+
+          <div class="grid gap-5 md:grid-cols-2">
+            <div>
+              <label for="vehicleType" class="field-label">Tipo de vehículo</label>
+              <select id="vehicleType" formControlName="vehicleType" class="field-input" [class.field-invalid]="showError('vehicle.vehicleType')">
+                <option value="">Selecciona un tipo</option>
+                @for (type of vehicleTypes; track type) { <option [value]="type">{{ type }}</option> }
+              </select>
+              @if (showError('vehicle.vehicleType')) { <p class="field-error">{{ errorFor('vehicle.vehicleType') }}</p> }
+            </div>
+            <div>
+              <label for="brand" class="field-label">Marca / fabricante</label>
+              <select id="brand" formControlName="brand" class="field-input" [class.field-invalid]="showError('vehicle.brand')">
+                <option value="">Selecciona una marca</option>
+                @for (brand of vehicleBrands; track brand) { <option [value]="brand">{{ brand }}</option> }
+              </select>
+              @if (showError('vehicle.brand')) { <p class="field-error">{{ errorFor('vehicle.brand') }}</p> }
+            </div>
+            <div>
+              <label for="plate" class="field-label">Placa <span class="text-red-500">*</span></label>
+              <input id="plate" formControlName="plate" class="field-input uppercase" autocomplete="off" placeholder="Ej. ABC123" [class.field-invalid]="showError('vehicle.plate')" />
+              @if (showError('vehicle.plate')) { <p class="field-error">{{ errorFor('vehicle.plate') }}</p> }
+            </div>
+            <div>
+              <label for="chassisNumber" class="field-label">VIN / número de chasis</label>
+              <input id="chassisNumber" formControlName="chassisNumber" class="field-input uppercase" autocomplete="off" placeholder="Número de identificación" [class.field-invalid]="showError('vehicle.chassisNumber')" />
+              @if (showError('vehicle.chassisNumber')) { <p class="field-error">{{ errorFor('vehicle.chassisNumber') }}</p> }
+            </div>
+            <div>
+              <label for="model" class="field-label">Modelo</label>
+              <input id="model" formControlName="model" class="field-input" autocomplete="off" placeholder="Ej. Corolla" [class.field-invalid]="showError('vehicle.model')" />
+              @if (showError('vehicle.model')) { <p class="field-error">{{ errorFor('vehicle.model') }}</p> }
+            </div>
+            <div>
+              <label for="vehicleYear" class="field-label">Año</label>
+              <input id="vehicleYear" formControlName="vehicleYear" type="number" min="1886" [max]="currentYear + 1" inputmode="numeric" class="field-input" [class.field-invalid]="showError('vehicle.vehicleYear')" />
+              @if (showError('vehicle.vehicleYear')) { <p class="field-error">{{ errorFor('vehicle.vehicleYear') }}</p> }
+            </div>
+          </div>
+        </section>
+
+        <section formGroupName="customer" class="rounded-2xl border border-neutral-800 bg-neutral-900 p-5 shadow-2xl shadow-black/10 sm:p-7">
+          <div class="mb-6 flex items-start gap-3">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-950 text-sm font-bold text-red-400">02</span>
+            <div>
+              <h2 class="text-lg font-semibold">Customer Information</h2>
+              <p class="mt-1 text-sm text-neutral-400">Información para vincular el cliente con la unidad.</p>
+            </div>
+          </div>
+
+          <div class="grid gap-5 md:grid-cols-2">
+            <div>
+              <label for="name" class="field-label">Nombre completo <span class="text-red-500">*</span></label>
+              <input id="name" formControlName="name" class="field-input" autocomplete="name" placeholder="Nombre y apellidos" [class.field-invalid]="showError('customer.name')" />
+              @if (showError('customer.name')) { <p class="field-error">{{ errorFor('customer.name') }}</p> }
+            </div>
+            <div>
+              <label for="identificationNumber" class="field-label">ID / cédula</label>
+              <input id="identificationNumber" formControlName="identificationNumber" class="field-input" autocomplete="off" placeholder="Número de identificación" [class.field-invalid]="showError('customer.identificationNumber')" />
+              @if (showError('customer.identificationNumber')) { <p class="field-error">{{ errorFor('customer.identificationNumber') }}</p> }
+            </div>
+            <div>
+              <label for="phone" class="field-label">Teléfono <span class="text-red-500">*</span></label>
+              <input id="phone" formControlName="phone" type="tel" class="field-input" autocomplete="tel" placeholder="Ej. 300 000 0000" [class.field-invalid]="showError('customer.phone')" />
+              @if (showError('customer.phone')) { <p class="field-error">{{ errorFor('customer.phone') }}</p> }
+            </div>
+            <div>
+              <label for="email" class="field-label">Correo electrónico</label>
+              <input id="email" formControlName="email" type="email" class="field-input" autocomplete="email" placeholder="cliente@correo.com" [class.field-invalid]="showError('customer.email')" />
+              @if (showError('customer.email')) { <p class="field-error">{{ errorFor('customer.email') }}</p> }
+            </div>
+          </div>
+        </section>
+
+        <section formGroupName="entry" class="rounded-2xl border border-neutral-800 bg-neutral-900 p-5 shadow-2xl shadow-black/10 sm:p-7">
+          <div class="mb-6 flex items-start gap-3">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-950 text-sm font-bold text-red-400">03</span>
+            <div>
+              <h2 class="text-lg font-semibold">Entry Details &amp; Diagnostics</h2>
+              <p class="mt-1 text-sm text-neutral-400">Motivo de visita y condiciones reportadas al recibir el vehículo.</p>
+            </div>
+          </div>
+
+          <div class="grid gap-5 md:grid-cols-2">
+            <div>
+              <label for="primaryReason" class="field-label">Motivo principal de visita</label>
+              <select id="primaryReason" formControlName="primaryReason" class="field-input" [class.field-invalid]="showError('entry.primaryReason')">
+                <option value="">Selecciona un motivo</option>
+                @for (reason of visitReasons; track reason) { <option [value]="reason">{{ reason }}</option> }
+              </select>
+              @if (showError('entry.primaryReason')) { <p class="field-error">{{ errorFor('entry.primaryReason') }}</p> }
+            </div>
+            <div>
+              <label for="currentMileage" class="field-label">Kilometraje actual</label>
+              <input id="currentMileage" formControlName="currentMileage" type="number" min="0" step="1" inputmode="numeric" class="field-input" [class.field-invalid]="showError('entry.currentMileage')" />
+              @if (showError('entry.currentMileage')) { <p class="field-error">{{ errorFor('entry.currentMileage') }}</p> }
+            </div>
+            <div class="md:col-span-2">
+              <label for="customerObservations" class="field-label">Observaciones</label>
+              <textarea id="customerObservations" formControlName="customerObservations" rows="5" class="field-input resize-y" placeholder="Describe el estado visible del vehículo, accesorios recibidos o solicitudes del cliente."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="rounded-2xl border border-neutral-800 bg-neutral-900 p-5 shadow-2xl shadow-black/10 sm:p-7">
+          <div class="mb-6 flex items-start gap-3">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-950 text-sm font-bold text-red-400">04</span>
+            <div>
+              <h2 class="text-lg font-semibold">Evidencia Fotográfica</h2>
+              <p class="mt-1 text-sm text-neutral-400">Adjunta hasta {{ maxEvidenceImages }} imágenes para documentar la recepción.</p>
+            </div>
+          </div>
+
+          <button type="button" class="flex w-full flex-col items-center justify-center rounded-xl border border-dashed border-neutral-700 bg-neutral-950/60 px-5 py-8 text-center transition hover:border-red-500/70 hover:bg-neutral-950" (click)="fileInput.click()" (dragover)="onDragOver($event)" (drop)="onDrop($event)">
+            <span class="mb-3 text-3xl text-red-500">＋</span>
+            <span class="font-semibold text-neutral-200">Arrastra imágenes aquí o haz clic para seleccionar</span>
+            <span class="mt-1 text-xs text-neutral-500">JPG, PNG o WebP · máximo 10 MB por imagen</span>
+            <input #fileInput type="file" class="hidden" accept="image/jpeg,image/png,image/webp" multiple (change)="onFileSelected($event)" />
+          </button>
+          @if (evidenceMessage()) { <p class="mt-3 text-sm text-amber-300">{{ evidenceMessage() }}</p> }
+
+          @if (selectedImages().length > 0) {
+            <div class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+              @for (image of selectedImages(); track trackImage($index, image)) {
+                <figure class="group relative overflow-hidden rounded-lg border border-neutral-700 bg-neutral-950">
+                  <img [src]="image.previewUrl" [alt]="'Evidencia ' + ($index + 1)" class="aspect-square w-full object-cover" />
+                  <button type="button" class="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-neutral-950/90 text-sm text-white opacity-0 transition group-hover:opacity-100 focus:opacity-100" [attr.aria-label]="'Eliminar ' + image.file.name" (click)="removeImage(image.id)">×</button>
+                  <figcaption class="truncate px-2 py-2 text-xs text-neutral-400">{{ image.file.name }}</figcaption>
+                </figure>
+              }
+            </div>
+          }
+          <p class="mt-4 text-xs text-neutral-500">Las imágenes se previsualizan localmente. El backend actual no cuenta con un endpoint de carga binaria; se conservarán localmente y sus nombres acompañarán el registro.</p>
+        </section>
+
+        <section class="flex flex-col-reverse gap-3 border-t border-neutral-800 pt-6 sm:flex-row sm:justify-end">
+          <button type="button" class="rounded-lg border border-neutral-700 px-5 py-3 text-sm font-bold text-neutral-300 transition hover:border-neutral-500 hover:bg-neutral-900 hover:text-white disabled:cursor-not-allowed disabled:opacity-50" [disabled]="loading()" (click)="cancel()">CANCELAR</button>
+          <button type="submit" class="rounded-lg bg-red-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-red-950/30 transition hover:bg-red-700 disabled:cursor-wait disabled:opacity-60" [disabled]="loading()">
+            @if (loading()) { Guardando… } @else { GUARDAR VEHÍCULO }
+          </button>
+        </section>
+      </div>
+    </form>
+  </div>
+</main>
