@@ -20,5 +20,12 @@ export const routes: Routes = [
         ({ VehicleListComponent }) => VehicleListComponent
       )
   },
+  {
+    path: 'mechanic/vehicles',
+    loadComponent: () =>
+      import('./features/vehicles/vehicle-list.component').then(
+        ({ VehicleListComponent }) => VehicleListComponent
+      )
+  },
   { path: '**', redirectTo: 'vehicle-intake' }
 ];

@@ -1,84 +1,159 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { VehicleResponse } from '../../core/models/api.models';
-import { VehicleIntakeService } from '../vehicle-intake/services/vehicle-intake.service';
+import { MechanicVehicleItem, VehicleStatus } from './models/vehicle-mechanic.models';
+import { VehicleMechanicService } from './services/vehicle-mechanic.service';
+
+interface ActionModalData {
+  type: 'EDIT' | 'HISTORY' | 'SERVICE';
+  vehicle: MechanicVehicleItem;
+}
 
 @Component({
   selector: 'app-vehicle-list',
   standalone: true,
   imports: [CommonModule, RouterLink],
-  template: `
-    <main class="min-h-screen bg-neutral-950 px-4 py-8 text-neutral-100 sm:px-6 lg:px-10">
-      <div class="mx-auto max-w-6xl">
-        <header class="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p class="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-red-500">AUTOLOG by CICLO MOTOR</p>
-            <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">Vehículos registrados</h1>
-          </div>
-          <a routerLink="/vehicle-intake" class="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-red-700">
-            + Nuevo ingreso
-          </a>
-        </header>
-
-        @if (error()) {
-          <div class="mb-6 rounded-xl border border-red-900/80 bg-red-950/50 p-4 text-sm text-red-200">{{ error() }}</div>
-        }
-
-        @if (loading()) {
-          <div class="rounded-2xl border border-neutral-800 bg-neutral-900 p-10 text-center text-neutral-400">Cargando vehículos…</div>
-        } @else if (vehicles().length === 0) {
-          <div class="rounded-2xl border border-dashed border-neutral-700 bg-neutral-900/70 p-12 text-center">
-            <p class="text-lg font-semibold">Aún no hay vehículos registrados</p>
-            <p class="mt-2 text-sm text-neutral-400">Registra el primer ingreso para verlo aquí.</p>
-          </div>
-        } @else {
-          <div class="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900">
-            <div class="overflow-x-auto">
-              <table class="min-w-full text-left text-sm">
-                <thead class="border-b border-neutral-800 bg-neutral-800/70 text-xs uppercase tracking-wider text-neutral-400">
-                  <tr>
-                    <th class="px-5 py-4">Placa</th>
-                    <th class="px-5 py-4">Vehículo</th>
-                    <th class="px-5 py-4">VIN / Chasis</th>
-                    <th class="px-5 py-4">Cliente</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-neutral-800">
-                  @for (vehicle of vehicles(); track vehicle.id) {
-                    <tr class="transition hover:bg-neutral-800/40">
-                      <td class="px-5 py-4 font-semibold text-white">{{ vehicle.plate }}</td>
-                      <td class="px-5 py-4 text-neutral-300">{{ vehicle.brand }} {{ vehicle.model }} · {{ vehicle.vehicleYear }}</td>
-                      <td class="px-5 py-4 text-neutral-400">{{ vehicle.chassisNumber }}</td>
-                      <td class="px-5 py-4 text-neutral-300">{{ vehicle.client.name }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          </div>
-        }
-      </div>
-    </main>
-  `
+  templateUrl: './vehicle-list.component.html',
+  styleUrl: './vehicle-list.component.css'
 })
 export class VehicleListComponent implements OnInit {
-  private readonly intakeService = inject(VehicleIntakeService);
-  readonly vehicles = signal<VehicleResponse[]>([]);
+  private readonly mechanicService = inject(VehicleMechanicService);
+
+  readonly allVehicles = signal<MechanicVehicleItem[]>([]);
   readonly loading = signal(true);
   readonly error = signal('');
 
+  // Controles de filtrado y búsqueda
+  readonly searchQuery = signal('');
+  readonly selectedStatus = signal<VehicleStatus | 'TODOS'>('TODOS');
+  readonly showFilterMenu = signal(false);
+
+  // Paginación (10 por página según maqueta)
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
+
+  // Estado del modal de detalle / acción
+  readonly modalState = signal<ActionModalData | null>(null);
+
+  // Lista filtrada en tiempo real
+  readonly filteredVehicles = computed(() => {
+    const query = this.searchQuery().trim().toLowerCase();
+    const status = this.selectedStatus();
+
+    return this.allVehicles().filter((item) => {
+      const matchesStatus = status === 'TODOS' || item.status === status;
+      if (!matchesStatus) {
+        return false;
+      }
+
+      if (!query) {
+        return true;
+      }
+
+      const searchableText = `${item.plate} ${item.brand} ${item.model} ${item.vehicleYear} ${item.color || ''} ${item.ownerName}`.toLowerCase();
+      return searchableText.includes(query);
+    });
+  });
+
+  // Cálculo de páginas totales
+  readonly totalPages = computed(() => {
+    const total = this.filteredVehicles().length;
+    return Math.max(1, Math.ceil(total / this.pageSize()));
+  });
+
+  // Elementos paginados para la tabla actual
+  readonly paginatedVehicles = computed(() => {
+    const items = this.filteredVehicles();
+    const page = this.currentPage();
+    const size = this.pageSize();
+    const startIndex = (page - 1) * size;
+    return items.slice(startIndex, startIndex + size);
+  });
+
+  // Información textual para el pie de página
+  readonly paginationInfo = computed(() => {
+    const total = this.filteredVehicles().length;
+    if (total === 0) {
+      return { start: 0, end: 0, total: 0 };
+    }
+
+    const page = this.currentPage();
+    const size = this.pageSize();
+    const start = (page - 1) * size + 1;
+    const end = Math.min(page * size, total);
+    return { start, end, total };
+  });
+
   ngOnInit(): void {
-    this.intakeService.getVehicles().subscribe({
-      next: (vehicles) => {
-        this.vehicles.set(vehicles);
+    this.loadVehicles();
+  }
+
+  loadVehicles(): void {
+    this.loading.set(true);
+    this.mechanicService.getMechanicVehicles().subscribe({
+      next: (data) => {
+        this.allVehicles.set(data);
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('No fue posible cargar el listado de vehículos. Verifica que el backend esté disponible.');
+        this.error.set('No se pudo establecer conexión con el backend. Mostrando datos de respaldo.');
         this.loading.set(false);
       }
     });
+  }
+
+  onSearchInput(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.searchQuery.set(target.value);
+    this.currentPage.set(1);
+  }
+
+  clearSearch(): void {
+    this.searchQuery.set('');
+    this.currentPage.set(1);
+  }
+
+  toggleFilterMenu(): void {
+    this.showFilterMenu.update((prev) => !prev);
+  }
+
+  setStatusFilter(status: VehicleStatus | 'TODOS'): void {
+    this.selectedStatus.set(status);
+    this.showFilterMenu.set(false);
+    this.currentPage.set(1);
+  }
+
+  previousPage(): void {
+    if (this.currentPage() > 1) {
+      this.currentPage.update((p) => p - 1);
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update((p) => p + 1);
+    }
+  }
+
+  openActionModal(type: 'EDIT' | 'HISTORY' | 'SERVICE', vehicle: MechanicVehicleItem): void {
+    this.modalState.set({ type, vehicle });
+  }
+
+  closeModal(): void {
+    this.modalState.set(null);
+  }
+
+  updateVehicleStatus(id: number, newStatus: VehicleStatus): void {
+    this.allVehicles.update((list) =>
+      list.map((v) => (v.id === id ? { ...v, status: newStatus } : v))
+    );
+    if (this.modalState()) {
+      const currentModal = this.modalState()!;
+      this.modalState.set({
+        ...currentModal,
+        vehicle: { ...currentModal.vehicle, status: newStatus }
+      });
+    }
   }
 }
