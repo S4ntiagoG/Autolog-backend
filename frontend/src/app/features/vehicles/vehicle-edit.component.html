@@ -1,0 +1,85 @@
+<main class="min-h-screen bg-[#121214] px-4 py-8 text-neutral-100">
+  <div class="mx-auto max-w-5xl rounded-2xl border border-neutral-800 bg-[#17171a] p-6 shadow-2xl">
+    <div class="mb-6 flex items-center justify-between gap-3">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-red-500">AUTOLOG</p>
+        <h1 class="mt-2 text-3xl font-bold">Edición del vehículo</h1>
+      </div>
+      <button type="button" routerLink="/vehicles" class="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm hover:bg-neutral-800">Volver</button>
+    </div>
+
+    @if (loading()) {
+      <div class="rounded-xl border border-neutral-800 bg-neutral-900 p-6 text-center text-neutral-300">Cargando información del vehículo...</div>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-6">
+        @if (error()) {
+          <div class="rounded-lg border border-red-900 bg-red-950/50 p-3 text-sm text-red-200">{{ error() }}</div>
+        }
+        @if (success()) {
+          <div class="rounded-lg border border-emerald-900 bg-emerald-950/40 p-3 text-sm text-emerald-200">{{ success() }}</div>
+        }
+
+        <section class="grid gap-6 md:grid-cols-2">
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-neutral-300">Tipo de vehículo</label>
+            <input formControlName="vehicleType" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm" [class.border-red-500]="showError('vehicleType')" />
+            @if (showError('vehicleType')) { <p class="text-xs text-red-400">{{ errorFor('vehicleType') }}</p> }
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-neutral-300">Marca</label>
+            <input formControlName="brand" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm" [class.border-red-500]="showError('brand')" />
+            @if (showError('brand')) { <p class="text-xs text-red-400">{{ errorFor('brand') }}</p> }
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-neutral-300">Placa</label>
+            <input formControlName="plate" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm uppercase" [class.border-red-500]="showError('plate')" />
+            @if (showError('plate')) { <p class="text-xs text-red-400">{{ errorFor('plate') }}</p> }
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-neutral-300">VIN / Chasis</label>
+            <input formControlName="chassisNumber" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm uppercase" [class.border-red-500]="showError('chassisNumber')" />
+            @if (showError('chassisNumber')) { <p class="text-xs text-red-400">{{ errorFor('chassisNumber') }}</p> }
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-neutral-300">Modelo</label>
+            <input formControlName="model" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm" [class.border-red-500]="showError('model')" />
+            @if (showError('model')) { <p class="text-xs text-red-400">{{ errorFor('model') }}</p> }
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-neutral-300">Año</label>
+            <input type="number" formControlName="vehicleYear" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm" [class.border-red-500]="showError('vehicleYear')" />
+            @if (showError('vehicleYear')) { <p class="text-xs text-red-400">{{ errorFor('vehicleYear') }}</p> }
+          </div>
+        </section>
+
+        <section class="mt-8 grid gap-6 md:grid-cols-2">
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-neutral-300">Nombre completo</label>
+            <input formControlName="clientName" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm" [class.border-red-500]="showError('clientName')" />
+            @if (showError('clientName')) { <p class="text-xs text-red-400">{{ errorFor('clientName') }}</p> }
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-neutral-300">Cédula / ID</label>
+            <input formControlName="identificationNumber" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm" [class.border-red-500]="showError('identificationNumber')" />
+            @if (showError('identificationNumber')) { <p class="text-xs text-red-400">{{ errorFor('identificationNumber') }}</p> }
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-neutral-300">Teléfono</label>
+            <input formControlName="phone" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm" [class.border-red-500]="showError('phone')" />
+            @if (showError('phone')) { <p class="text-xs text-red-400">{{ errorFor('phone') }}</p> }
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-neutral-300">Correo electrónico</label>
+            <input formControlName="email" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm" [class.border-red-500]="showError('email')" />
+            @if (showError('email')) { <p class="text-xs text-red-400">{{ errorFor('email') }}</p> }
+          </div>
+        </section>
+
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" (click)="cancel()" class="rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-2 text-sm hover:bg-neutral-800">CANCELAR</button>
+          <button type="submit" [disabled]="saving() || loading()" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60">{{ saving() ? 'Guardando...' : 'GUARDAR CAMBIOS' }}</button>
+        </div>
+      </form>
+    }
+  </div>
+</main>

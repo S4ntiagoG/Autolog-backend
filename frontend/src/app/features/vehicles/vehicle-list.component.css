@@ -1,0 +1,62 @@
+:host {
+  display: block;
+}
+
+/* Placa con aspecto físico realista tipo chapa metálica (Estilo Colombiano) */
+.license-plate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 6.25rem;
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(180deg, #ffe019 0%, #f5b700 100%);
+  color: #000000;
+  font-family: "Arial Black", Impact, "Franklin Gothic Heavy", "Trebuchet MS", sans-serif;
+  font-weight: 900;
+  font-size: 0.9375rem;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-radius: 0.35rem;
+  border: 2px solid #000000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.55), inset 0 0 0 1.5px rgba(0, 0, 0, 0.75);
+  -webkit-text-stroke: 0.75px #000000;
+  text-shadow: 0 0.5px 0.5px rgba(255, 255, 255, 0.5);
+  user-select: all;
+}
+
+/* Badges de estado técnicos con borde neón tenue */
+.badge-ready {
+  border: 1px solid rgba(22, 163, 74, 0.65);
+  background-color: rgba(5, 46, 22, 0.45);
+  color: #4ade80;
+}
+
+.badge-in-progress {
+  border: 1px solid rgba(37, 99, 235, 0.65);
+  background-color: rgba(23, 37, 84, 0.45);
+  color: #60a5fa;
+}
+
+.badge-pending {
+  border: 1px solid rgba(217, 119, 6, 0.65);
+  background-color: rgba(69, 26, 3, 0.45);
+  color: #fb923c;
+}
+
+/* Scrollbar estilizada */
+::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #121214;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+

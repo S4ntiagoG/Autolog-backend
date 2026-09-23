@@ -1,0 +1,120 @@
+<main class="min-h-screen bg-[#121214] px-4 py-8 text-neutral-100">
+  <div class="mx-auto max-w-6xl space-y-6">
+    <header class="rounded-2xl border border-neutral-800 bg-[#1a1a1d] p-5">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.25em] text-red-500">Orden de servicio</p>
+          <h1 class="mt-2 text-3xl font-bold">#{{ order()?.id ?? '---' }}</h1>
+        </div>
+        <div class="flex items-center gap-3">
+          <select [value]="form.get('orderStatus')?.value" (change)="setStatus($any($event.target).value)" class="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm">
+            <option value="PENDIENTE">PENDIENTE</option>
+            <option value="EN PROCESO">EN PROCESO</option>
+            <option value="EN ESPERA">EN ESPERA</option>
+            <option value="FINALIZADA">FINALIZADA</option>
+            <option value="ENTREGADA">ENTREGADA</option>
+            <option value="CANCELADA">CANCELADA</option>
+          </select>
+          <button type="button" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-500">Imprimir</button>
+        </div>
+      </div>
+    </header>
+
+    @if (loading()) {
+      <div class="rounded-xl border border-neutral-800 bg-[#17171a] p-6 text-center text-neutral-300">Cargando orden...</div>
+    } @else {
+      <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <section class="space-y-6">
+          <div class="rounded-2xl border border-neutral-800 bg-[#17171a] p-5">
+            <h2 class="mb-4 text-xl font-semibold">Diagnóstico inicial</h2>
+            <form [formGroup]="form" class="space-y-4">
+              <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label class="mb-1 block text-sm text-neutral-300">Motivo principal</label>
+                  <input formControlName="primaryReason" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label class="mb-1 block text-sm text-neutral-300">Kilometraje</label>
+                  <input type="number" formControlName="currentMileage" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label class="mb-1 block text-sm text-neutral-300">Unidad</label>
+                  <input formControlName="mileageUnit" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label class="mb-1 block text-sm text-neutral-300">Fecha de recepción</label>
+                  <input [value]="order()?.entryDate ?? ''" readonly class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-400" />
+                </div>
+              </div>
+
+              <div>
+                <label class="mb-1 block text-sm text-neutral-300">Observaciones iniciales</label>
+                <textarea formControlName="initialObservations" rows="3" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm"></textarea>
+              </div>
+              <div>
+                <label class="mb-1 block text-sm text-neutral-300">Observaciones del cliente</label>
+                <textarea formControlName="customerObservations" rows="3" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm"></textarea>
+              </div>
+              <div>
+                <label class="mb-1 block text-sm text-neutral-300">Observaciones preliminares del taller</label>
+                <textarea formControlName="workshopPreliminaryObservations" rows="3" class="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm"></textarea>
+              </div>
+
+              <div class="flex items-center justify-between gap-3 pt-2">
+                <div class="text-xs text-neutral-400">Última edición: {{ order()?.updatedAt ? (order()?.updatedAt | date:'dd/MM/yyyy HH:mm') : 'Sin cambios' }}</div>
+                <button type="button" (click)="saveOrder()" [disabled]="saving()" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60">
+                  {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="rounded-2xl border border-neutral-800 bg-[#17171a] p-5">
+            <h2 class="mb-4 text-xl font-semibold">Tareas realizadas</h2>
+            <div class="mb-4 flex gap-2">
+              <input [value]="taskInput()" (input)="taskInput.set($any($event.target).value)" class="flex-1 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm" placeholder="Agregar tarea..." />
+              <button type="button" (click)="addTask()" class="rounded-lg bg-neutral-800 px-4 py-2 text-sm font-semibold hover:bg-neutral-700">+ ADD TASK</button>
+            </div>
+
+            @if (tasks().length === 0) {
+              <div class="rounded-lg border border-dashed border-neutral-700 p-4 text-sm text-neutral-400">No existen tareas registradas para esta orden.</div>
+            } @else {
+              <div class="space-y-3">
+                @for (task of tasks(); track task.id) {
+                  <div class="flex items-center justify-between gap-3 rounded-lg border border-neutral-800 bg-neutral-950 p-3">
+                    <label class="flex items-center gap-3 text-sm text-neutral-200">
+                      <input type="checkbox" [checked]="task.completed" (change)="toggleTask(task)" class="h-4 w-4 accent-emerald-500" />
+                      <span [class.line-through]="task.completed" [class.text-neutral-500]="task.completed">{{ task.description }}</span>
+                    </label>
+                    <span [class.text-emerald-400]="task.completed" [class.text-amber-400]="!task.completed" class="text-xs font-semibold uppercase">
+                      {{ task.completed ? 'Completada' : 'Pendiente' }}
+                    </span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </section>
+
+        <aside class="space-y-6">
+          <div class="rounded-2xl border border-neutral-800 bg-[#17171a] p-5">
+            <h3 class="text-lg font-semibold">Resumen del vehículo</h3>
+            <dl class="mt-4 space-y-3 text-sm text-neutral-300">
+              <div class="flex justify-between gap-3"><dt>Marca</dt><dd class="font-medium text-white">{{ order()?.vehicle?.brand ?? '---' }}</dd></div>
+              <div class="flex justify-between gap-3"><dt>Modelo</dt><dd class="font-medium text-white">{{ order()?.vehicle?.model ?? '---' }}</dd></div>
+              <div class="flex justify-between gap-3"><dt>Placa</dt><dd class="font-medium text-white">{{ order()?.vehicle?.plate ?? '---' }}</dd></div>
+              <div class="flex justify-between gap-3"><dt>Dueño</dt><dd class="font-medium text-white">{{ order()?.vehicle?.client?.name ?? '---' }}</dd></div>
+            </dl>
+          </div>
+
+          @if (error()) {
+            <div class="rounded-xl border border-red-900 bg-red-950/50 p-3 text-sm text-red-200">{{ error() }}</div>
+          }
+          @if (success()) {
+            <div class="rounded-xl border border-emerald-900 bg-emerald-950/40 p-3 text-sm text-emerald-200">{{ success() }}</div>
+          }
+        </aside>
+      </div>
+    }
+  </div>
+</main>

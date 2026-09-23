@@ -1,0 +1,99 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
+
+import { VehicleListComponent } from './vehicle-list.component';
+import { VehicleMechanicService } from './services/vehicle-mechanic.service';
+import { MechanicVehicleItem } from './models/vehicle-mechanic.models';
+
+const MOCK_ITEMS: MechanicVehicleItem[] = [
+  {
+    id: 1,
+    plate: 'B7X-982',
+    brand: 'Toyota',
+    model: 'Corolla',
+    vehicleYear: 2022,
+    color: 'Silver',
+    ownerName: 'Michael Johnson',
+    lastServiceDate: '12/05/2023',
+    status: 'LISTO'
+  },
+  {
+    id: 2,
+    plate: 'ABC-123',
+    brand: 'Honda',
+    model: 'Civic',
+    vehicleYear: 2020,
+    color: 'Black',
+    ownerName: 'Sarah Williams',
+    lastServiceDate: '20/09/2023',
+    status: 'EN PROGRESO'
+  },
+  {
+    id: 3,
+    plate: 'XYZ-789',
+    brand: 'Ford',
+    model: 'F-150',
+    vehicleYear: 2019,
+    color: 'White',
+    ownerName: 'David Smith',
+    lastServiceDate: '-- / -- / ----',
+    status: 'PENDIENTE'
+  }
+];
+
+describe('VehicleListComponent', () => {
+  let fixture: ComponentFixture<VehicleListComponent>;
+  let component: VehicleListComponent;
+  let mechanicService: jasmine.SpyObj<VehicleMechanicService>;
+
+  beforeEach(async () => {
+    mechanicService = jasmine.createSpyObj<VehicleMechanicService>('VehicleMechanicService', ['getMechanicVehicles']);
+    mechanicService.getMechanicVehicles.and.returnValue(of(MOCK_ITEMS));
+
+    await TestBed.configureTestingModule({
+      imports: [VehicleListComponent],
+      providers: [
+        { provide: VehicleMechanicService, useValue: mechanicService },
+        provideRouter([])
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(VehicleListComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should initialize and load vehicles', () => {
+    expect(component.allVehicles().length).toBe(3);
+    expect(component.loading()).toBeFalse();
+  });
+
+  it('filters vehicles by search query', () => {
+    component.searchQuery.set('corolla');
+    expect(component.filteredVehicles().length).toBe(1);
+    expect(component.filteredVehicles()[0].plate).toBe('B7X-982');
+  });
+
+  it('filters vehicles by status', () => {
+    component.setStatusFilter('EN PROGRESO');
+    expect(component.filteredVehicles().length).toBe(1);
+    expect(component.filteredVehicles()[0].status).toBe('EN PROGRESO');
+  });
+
+  it('opens and closes action modal', () => {
+    component.openActionModal('EDIT', MOCK_ITEMS[0]);
+    expect(component.modalState()?.type).toBe('EDIT');
+    expect(component.modalState()?.vehicle.plate).toBe('B7X-982');
+
+    component.closeModal();
+    expect(component.modalState()).toBeNull();
+  });
+
+  it('updates vehicle status successfully', () => {
+    component.updateVehicleStatus(1, 'EN PROGRESO');
+    const updated = component.allVehicles().find((v) => v.id === 1);
+    expect(updated?.status).toBe('EN PROGRESO');
+  });
+});
+

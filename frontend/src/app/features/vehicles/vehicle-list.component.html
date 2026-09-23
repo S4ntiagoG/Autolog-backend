@@ -1,0 +1,384 @@
+<main class="min-h-screen bg-[#111113] px-4 py-8 text-neutral-100 sm:px-6 lg:px-10">
+  <div class="mx-auto max-w-7xl">
+    
+    <!-- Encabezado general con navegación -->
+    <header class="mb-6 flex flex-wrap items-end justify-between gap-4 rounded-xl border border-neutral-800/60 border-b-2 border-b-[#D32F2F] bg-[#1E0F0E] p-5 sm:p-6 shadow-xl">
+      <div>
+        <p class="mb-1 text-xs font-semibold uppercase tracking-[0.24em] text-red-500">AUTOLOG by CICLO MOTOR</p>
+        <h1 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Gestión de Vehículos</h1>
+        <p class="mt-1 text-xs text-neutral-400">Administre y rastree todos los vehículos registrados</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <a
+          routerLink="/vehicle-intake"
+          class="inline-flex items-center gap-2 rounded-lg bg-[#D32F2F] px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-red-950/40 transition hover:bg-[#b71c1c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+        >
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          REGISTRAR NUEVO VEHÍCULO
+        </a>
+      </div>
+    </header>
+
+    @if (error()) {
+      <div class="mb-5 rounded-xl border border-red-900/80 bg-red-950/40 p-4 text-xs text-red-200">
+        {{ error() }}
+      </div>
+    }
+
+    <!-- Contenedor Principal: Replica exacta de la maqueta -->
+    <div class="overflow-hidden rounded-xl border border-[#26262a] bg-[#161618] shadow-2xl">
+      
+      <!-- Barra superior: Búsqueda y Botón Filtrar -->
+      <div class="relative flex flex-wrap items-center justify-between gap-3 border-b border-[#26262a] p-4">
+        <!-- Buscador -->
+        <div class="relative w-full max-w-sm">
+          <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
+          <input
+            type="text"
+            [value]="searchQuery()"
+            (input)="onSearchInput($event)"
+            placeholder="Buscar placas, modelos..."
+            class="w-full rounded-md border border-[#2e2e34] bg-[#1b1b1e] py-2 pl-9 pr-3 text-xs text-neutral-100 placeholder-neutral-500 transition focus:border-red-500 focus:bg-[#202024] focus:outline-none focus:ring-1 focus:ring-red-500"
+          />
+          @if (searchQuery()) {
+            <button
+              (click)="clearSearch()"
+              class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-neutral-500 hover:text-neutral-300"
+              title="Borrar búsqueda"
+            >
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          }
+        </div>
+
+        <!-- Botón Filtrar y Menú emergente -->
+        <div class="relative">
+          <button
+            type="button"
+            (click)="toggleFilterMenu()"
+            [class.border-red-500]="selectedStatus() !== 'TODOS'"
+            class="inline-flex items-center gap-2 rounded-md border border-[#34343a] bg-[#222226] px-3.5 py-2 text-xs font-semibold text-neutral-200 transition hover:border-[#4b4b53] hover:bg-[#29292e] hover:text-white"
+          >
+            <!-- Icono de filtro idéntico al de la imagen (embudo con líneas) -->
+            <svg class="h-3.5 w-3.5 text-neutral-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span>Filtrar</span>
+            @if (selectedStatus() !== 'TODOS') {
+              <span class="ml-1 rounded bg-red-950 px-1.5 py-0.2 text-[10px] font-bold text-red-400">
+                {{ selectedStatus() }}
+              </span>
+            }
+          </button>
+
+          <!-- Dropdown emergente de filtros -->
+          @if (showFilterMenu()) {
+            <div class="absolute right-0 z-30 mt-2 w-48 rounded-lg border border-[#34343a] bg-[#1d1d21] p-1.5 shadow-xl">
+              <div class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                Estado del vehículo
+              </div>
+              <button
+                type="button"
+                (click)="setStatusFilter('TODOS')"
+                class="flex w-full items-center justify-between rounded px-2.5 py-1.5 text-left text-xs transition hover:bg-neutral-800"
+                [class.text-white]="selectedStatus() === 'TODOS'"
+                [class.font-semibold]="selectedStatus() === 'TODOS'"
+                [class.text-neutral-300]="selectedStatus() !== 'TODOS'"
+              >
+                <span>Todos los estados</span>
+                @if (selectedStatus() === 'TODOS') { <span class="text-red-400">✓</span> }
+              </button>
+              <button
+                type="button"
+                (click)="setStatusFilter('LISTO')"
+                class="flex w-full items-center justify-between rounded px-2.5 py-1.5 text-left text-xs text-emerald-400 transition hover:bg-neutral-800"
+                [class.font-semibold]="selectedStatus() === 'LISTO'"
+              >
+                <span>LISTO</span>
+                @if (selectedStatus() === 'LISTO') { <span>✓</span> }
+              </button>
+              <button
+                type="button"
+                (click)="setStatusFilter('EN PROGRESO')"
+                class="flex w-full items-center justify-between rounded px-2.5 py-1.5 text-left text-xs text-blue-400 transition hover:bg-neutral-800"
+                [class.font-semibold]="selectedStatus() === 'EN PROGRESO'"
+              >
+                <span>EN PROGRESO</span>
+                @if (selectedStatus() === 'EN PROGRESO') { <span>✓</span> }
+              </button>
+              <button
+                type="button"
+                (click)="setStatusFilter('PENDIENTE')"
+                class="flex w-full items-center justify-between rounded px-2.5 py-1.5 text-left text-xs text-amber-500 transition hover:bg-neutral-800"
+                [class.font-semibold]="selectedStatus() === 'PENDIENTE'"
+              >
+                <span>PENDIENTE</span>
+                @if (selectedStatus() === 'PENDIENTE') { <span>✓</span> }
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Tabla de Vehículos -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full border-collapse text-left">
+          <!-- Cabeceras con estética técnica de la imagen -->
+          <thead>
+            <tr class="border-b border-[#26262a] bg-[#161618] text-[11px] font-bold uppercase tracking-wider text-neutral-400">
+              <th scope="col" class="px-5 py-3.5">Placa</th>
+              <th scope="col" class="px-5 py-3.5">Marca / Modelo</th>
+              <th scope="col" class="px-5 py-3.5">Propietario</th>
+              <th scope="col" class="px-5 py-3.5">Último Servicio</th>
+              <th scope="col" class="px-5 py-3.5">Estado</th>
+              <th scope="col" class="px-5 py-3.5 text-right">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody class="divide-y divide-[#222226] text-xs">
+            @if (loading()) {
+              <tr>
+                <td colspan="6" class="px-5 py-12 text-center text-neutral-400">
+                  <div class="inline-flex items-center gap-2">
+                    <svg class="h-4 w-4 animate-spin text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <circle cx="12" cy="12" r="10" stroke-width="4" class="opacity-25"></circle>
+                      <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" class="opacity-75"></path>
+                    </svg>
+                    Cargando vehículos...
+                  </div>
+                </td>
+              </tr>
+            } @else if (paginatedVehicles().length === 0) {
+              <tr>
+                <td colspan="6" class="px-5 py-12 text-center text-neutral-400">
+                  <p class="font-medium text-neutral-300">No se encontraron vehículos</p>
+                  <p class="mt-1 text-[11px] text-neutral-500">Prueba ajustando la búsqueda o cambiando el filtro de estado.</p>
+                </td>
+              </tr>
+            } @else {
+              @for (item of paginatedVehicles(); track item.id) {
+                <tr class="transition-colors hover:bg-[#1d1d21]/60">
+                  
+                  <!-- Placa metálica realista -->
+                  <td class="whitespace-nowrap px-5 py-3.5">
+                    <span class="license-plate">{{ item.plate }}</span>
+                  </td>
+
+                  <!-- Marca / Modelo -->
+                  <td class="whitespace-nowrap px-5 py-3.5 font-normal text-neutral-200">
+                    {{ item.brand }} {{ item.model }} {{ item.vehicleYear }} {{ item.color ? item.color : '' }}
+                  </td>
+
+                  <!-- Propietario -->
+                  <td class="whitespace-nowrap px-5 py-3.5 font-normal text-neutral-300">
+                    {{ item.ownerName }}
+                  </td>
+
+                  <!-- Último Servicio -->
+                  <td class="whitespace-nowrap px-5 py-3.5 font-mono text-neutral-300">
+                    {{ item.lastServiceDate }}
+                  </td>
+
+                  <!-- Estado en badge neón / marco técnico -->
+                  <td class="whitespace-nowrap px-5 py-3.5">
+                    @if (item.status === 'LISTO') {
+                      <span class="badge-ready inline-block min-w-[5.25rem] rounded px-2.5 py-1 text-center text-[10px] font-bold uppercase tracking-wider">
+                        LISTO
+                      </span>
+                    } @else if (item.status === 'EN PROGRESO') {
+                      <span class="badge-in-progress inline-block min-w-[5.25rem] rounded px-2.5 py-1 text-center text-[10px] font-bold uppercase tracking-wider">
+                        EN PROGRESO
+                      </span>
+                    } @else {
+                      <span class="badge-pending inline-block min-w-[5.25rem] rounded px-2.5 py-1 text-center text-[10px] font-bold uppercase tracking-wider">
+                        PENDIENTE
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Acciones con los 3 iconos exactos de la imagen -->
+                  <td class="whitespace-nowrap px-5 py-3.5 text-right">
+                    <div class="inline-flex items-center justify-end gap-1.5">
+                      <!-- 1. Icono Lápiz (Editar) -->
+                      <button
+                        type="button"
+                        (click)="openActionModal('EDIT', item)"
+                        class="rounded p-1.5 text-neutral-300 transition hover:bg-neutral-800 hover:text-white"
+                        title="Editar vehículo"
+                        aria-label="Editar vehículo"
+                      >
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                        </svg>
+                      </button>
+
+                      <!-- 2. Icono Reloj en reversa (Historial de servicios) -->
+                      <button
+                        type="button"
+                        (click)="openActionModal('HISTORY', item)"
+                        class="rounded p-1.5 text-neutral-300 transition hover:bg-neutral-800 hover:text-white"
+                        title="Ver historial de intervenciones"
+                        aria-label="Ver historial"
+                      >
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                          <path d="M3 3v5h5"></path>
+                          <path d="M12 7v5l4 2"></path>
+                        </svg>
+                      </button>
+
+                      <!-- 3. Icono Llave inglesa (Taller / Diagnóstico mecánico) -->
+                      <button
+                        type="button"
+                        (click)="openActionModal('SERVICE', item)"
+                        class="rounded p-1.5 text-neutral-300 transition hover:bg-neutral-800 hover:text-white"
+                        title="Diagnóstico y orden de trabajo mecánico"
+                        aria-label="Diagnóstico mecánico"
+                      >
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pie de página y Paginación (idéntico a la imagen) -->
+      <div class="flex flex-wrap items-center justify-between gap-3 border-t border-[#26262a] px-5 py-3 text-xs text-neutral-400">
+        <div>
+          Mostrando {{ paginationInfo().start }} a {{ paginationInfo().end }} de {{ paginationInfo().total }} vehículos
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <button
+            type="button"
+            (click)="previousPage()"
+            [disabled]="currentPage() === 1"
+            class="inline-flex h-7 w-7 items-center justify-center rounded border border-[#2e2e34] bg-[#1c1c1f] text-neutral-400 transition hover:border-[#4b4b53] hover:bg-[#25252a] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+            title="Página anterior"
+            aria-label="Página anterior"
+          >
+            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            (click)="nextPage()"
+            [disabled]="currentPage() >= totalPages()"
+            class="inline-flex h-7 w-7 items-center justify-center rounded border border-[#2e2e34] bg-[#1c1c1f] text-neutral-400 transition hover:border-[#4b4b53] hover:bg-[#25252a] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+            title="Página siguiente"
+            aria-label="Página siguiente"
+          >
+            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal interactivo de acción para mecánicos -->
+  @if (modalState(); as modal) {
+    <div
+      role="dialog"
+      aria-modal="true"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs"
+    >
+      <div class="w-full max-w-md rounded-2xl border border-neutral-800 bg-[#18181b] p-6 shadow-2xl text-neutral-100">
+        
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="license-plate">{{ modal.vehicle.plate }}</span>
+            <h2 class="text-sm font-semibold">
+              @if (modal.type === 'EDIT') { Editar Registro }
+              @else if (modal.type === 'HISTORY') { Historial de Servicios }
+              @else { Orden de Taller / Diagnóstico }
+            </h2>
+          </div>
+          <button
+            type="button"
+            (click)="closeModal()"
+            class="rounded-md p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white"
+            aria-label="Cerrar modal"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="mt-4 space-y-3 text-xs text-neutral-300">
+          <div class="rounded-lg bg-neutral-900/90 p-3">
+            <p class="font-medium text-white">{{ modal.vehicle.brand }} {{ modal.vehicle.model }} ({{ modal.vehicle.vehicleYear }})</p>
+            <p class="mt-1 text-neutral-400">Propietario: <span class="text-neutral-200">{{ modal.vehicle.ownerName }}</span></p>
+            <p class="text-neutral-400">Último ingreso: <span class="font-mono text-neutral-200">{{ modal.vehicle.lastServiceDate }}</span></p>
+            <p class="text-neutral-400">Estado actual: <span class="font-bold text-white">{{ modal.vehicle.status }}</span></p>
+          </div>
+
+          @if (modal.type === 'EDIT') {
+            <p class="text-neutral-400">
+              Puedes actualizar el estado técnico o verificar los datos maestros del vehículo en taller.
+            </p>
+            <div class="flex items-center gap-2 pt-2">
+              <label class="text-[11px] font-semibold text-neutral-400">Cambiar estado:</label>
+              <select
+                [value]="modal.vehicle.status"
+                (change)="updateVehicleStatus(modal.vehicle.id, $any($event.target).value)"
+                class="rounded border border-neutral-700 bg-neutral-900 px-2.5 py-1 text-xs text-white"
+              >
+                <option value="LISTO">LISTO</option>
+                <option value="EN PROGRESO">EN PROGRESO</option>
+                <option value="PENDIENTE">PENDIENTE</option>
+              </select>
+            </div>
+          } @else if (modal.type === 'HISTORY') {
+            <p class="text-neutral-400">
+              Registro histórico de intervenciones y mantenimiento preventivo/correctivo para la placa <strong class="text-white">{{ modal.vehicle.plate }}</strong>.
+            </p>
+            <div class="rounded border border-neutral-800 bg-neutral-950 p-3">
+              <p class="font-semibold text-neutral-200">Servicio de Recepción</p>
+              <p class="text-neutral-400">Fecha: {{ modal.vehicle.lastServiceDate }}</p>
+              <p class="mt-1 text-[11px] text-neutral-500">Inspección de 5 puntos, odómetro y revisión general inicial.</p>
+            </div>
+          } @else {
+            <p class="text-neutral-400">
+              Módulo de taller para mecánicos asignados. Permite asentar diagnósticos, checklist de repuestos y cerrar la orden de servicio.
+            </p>
+            <div class="rounded border border-neutral-800 bg-neutral-950 p-3">
+              <span class="inline-block rounded bg-red-950 px-2 py-0.5 text-[10px] font-bold text-red-400">Mecánico de Turno</span>
+              <p class="mt-1 text-neutral-200">Diagnóstico preliminar en proceso.</p>
+            </div>
+          }
+        </div>
+
+        <div class="mt-5 flex justify-end gap-2 border-t border-neutral-800 pt-3">
+          <button
+            type="button"
+            (click)="closeModal()"
+            class="rounded-lg bg-neutral-800 px-3.5 py-2 text-xs font-semibold text-neutral-200 hover:bg-neutral-700 hover:text-white"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</main>
+
