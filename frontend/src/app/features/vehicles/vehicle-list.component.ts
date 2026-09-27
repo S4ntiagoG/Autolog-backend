@@ -91,14 +91,35 @@ export class VehicleListComponent implements OnInit {
 
   loadVehicles(): void {
     this.loading.set(true);
+    this.error.set('');
     this.mechanicService.getMechanicVehicles().subscribe({
       next: (data) => {
         this.allVehicles.set(data);
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set('No se pudo establecer conexión con el backend. Mostrando datos de respaldo.');
+      error: (err) => {
+        console.error('Error cargando vehículos:', err);
+        this.error.set('No se pudo establecer conexión con el backend (http://localhost:8080). Asegúrate de que el backend de Spring Boot esté iniciado con "./gradlew bootRun".');
+        this.allVehicles.set([]);
         this.loading.set(false);
+      }
+    });
+  }
+
+  deleteVehicle(id: number, plate: string): void {
+    if (!confirm(`¿Estás seguro de eliminar de la base de datos el vehículo con placa ${plate}?`)) {
+      return;
+    }
+    this.mechanicService.deleteVehicle(id).subscribe({
+      next: () => {
+        this.allVehicles.update((list) => list.filter((v) => v.id !== id));
+        if (this.modalState()?.vehicle.id === id) {
+          this.closeModal();
+        }
+      },
+      error: (err) => {
+        console.error('Error eliminando vehículo:', err);
+        alert('No se pudo eliminar el vehículo. Si tiene órdenes de servicio asociadas, deben removerse primero.');
       }
     });
   }

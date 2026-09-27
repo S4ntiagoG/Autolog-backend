@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -63,6 +65,34 @@ class VehicleServiceTest {
     }
 
     @Test
+    @DisplayName("Debería reutilizar el vehículo existente del mismo cliente")
+    void testGetOrCreateVehicleReusesExistingVehicleForSameClient() {
+        Client client = new Client();
+        client.setId(4L);
+
+        Vehicle existingVehicle = new Vehicle();
+        existingVehicle.setId(12L);
+        existingVehicle.setPlate("ABC-123");
+        existingVehicle.setChassisNumber("VIN-123");
+        existingVehicle.setClient(client);
+
+        Vehicle incomingVehicle = new Vehicle();
+        incomingVehicle.setPlate("ABC-123");
+        incomingVehicle.setChassisNumber("VIN-123");
+        incomingVehicle.setClient(client);
+
+        when(vehicleRepository.findByPlate("ABC-123")).thenReturn(Optional.of(existingVehicle));
+        when(vehicleRepository.findByChassisNumber("VIN-123")).thenReturn(Optional.of(existingVehicle));
+
+        Vehicle result = vehicleService.getOrCreateVehicle(incomingVehicle);
+
+        assertSame(existingVehicle, result);
+        assertEquals(12L, result.getId());
+        assertEquals(4L, result.getClient().getId());
+        verify(vehicleRepository, never()).save(any(Vehicle.class));
+    }
+
+    @Test
     @DisplayName("Debería encontrar un vehículo por su ID")
     void testFindVehicleById() {
         // Arrange
@@ -81,4 +111,4 @@ class VehicleServiceTest {
         assertEquals("XYZ-789", foundVehicle.get().getPlate());
         verify(vehicleRepository, times(1)).findById(vehicleId);
     }
-}
+} 

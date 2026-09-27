@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +18,7 @@ import com.autolog.backend.service.VehicleService;
 
 @RestController
 @RequestMapping("/api/vehicles")
+@CrossOrigin(origins = "*")
 public class VehicleController {
 
     private final VehicleService vehicleService;
@@ -43,7 +45,7 @@ public class VehicleController {
     // POST: Registrar un nuevo vehículo -> http://localhost:8080/api/vehicles
     @PostMapping
     public ResponseEntity<Vehicle> createVehicle(@RequestBody Vehicle vehicle) {
-        Vehicle savedVehicle = vehicleService.saveVehicle(vehicle);
+        Vehicle savedVehicle = vehicleService.getOrCreateVehicle(vehicle);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedVehicle);
     }
 

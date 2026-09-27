@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +18,7 @@ import com.autolog.backend.service.ClientService;
 
 @RestController
 @RequestMapping("/api/clients")
+@CrossOrigin(origins = "*")
 public class ClientController {
 
     private final ClientService clientService;
@@ -43,7 +45,7 @@ public class ClientController {
     // POST: Registrar un nuevo cliente -> http://localhost:8080/api/clients
     @PostMapping
     public ResponseEntity<Client> createClient(@RequestBody Client client) {
-        Client savedClient = clientService.saveClient(client);
+        Client savedClient = clientService.getOrCreateClient(client);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedClient);
     }
 

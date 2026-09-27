@@ -37,6 +37,9 @@ export class VehicleIntakeComponent implements OnDestroy {
   readonly vehicleBrands = VEHICLE_BRANDS;
   readonly visitReasons = VISIT_REASONS;
   readonly currentYear = new Date().getFullYear();
+  currentSystemDisplayDate(): string {
+    return new Intl.DateTimeFormat('es-CO').format(new Date());
+  }
   readonly maxEvidenceImages = MAX_EVIDENCE_IMAGES;
   readonly selectedImages = signal<SelectedImage[]>([]);
   readonly loading = signal(false);
@@ -61,6 +64,7 @@ export class VehicleIntakeComponent implements OnDestroy {
       email: ['', [Validators.required, Validators.email]]
     }),
     entry: this.fb.nonNullable.group({
+      entryDate: [this.currentDateAsIso(), Validators.required],
       primaryReason: ['', Validators.required],
       currentMileage: [0, [Validators.required, Validators.min(0)]],
       customerObservations: ['']
@@ -123,6 +127,7 @@ export class VehicleIntakeComponent implements OnDestroy {
         email: ''
       },
       entry: {
+        entryDate: this.currentDateAsIso(),
         primaryReason: '',
         currentMileage: 0,
         customerObservations: ''
@@ -161,6 +166,14 @@ export class VehicleIntakeComponent implements OnDestroy {
       return 'Ingresa un valor válido.';
     }
     return 'Revisa este campo.';
+  }
+
+  private currentDateAsIso(): string {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   onFileSelected(event: Event): void {

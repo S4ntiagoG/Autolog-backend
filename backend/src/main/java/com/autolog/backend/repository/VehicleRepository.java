@@ -12,4 +12,6 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
     
     // Método personalizado útil para buscar vehículos por su placa
     Optional<Vehicle> findByPlate(String plate);
+
+    Optional<Vehicle> findByChassisNumber(String chassisNumber);
 }

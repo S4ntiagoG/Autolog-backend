@@ -1,4 +1,11 @@
-export const VEHICLE_TYPES = ['Automóvil', 'Motocicleta', 'Camioneta', 'Camión', 'SUV'] as const;
+export const VEHICLE_TYPES = [
+  'Automóvil', 
+  'Motocicleta', 
+  'Camioneta', 
+  'Camión', 
+  'SUV',
+  'Bus'
+] as const;
 
 export const VEHICLE_BRANDS = [
   'Chevrolet',

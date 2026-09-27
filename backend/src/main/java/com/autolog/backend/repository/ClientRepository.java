@@ -12,4 +12,6 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
     
     // Método opcional pero muy útil para buscar clientes por su email único
     Optional<Client> findByEmail(String email);
+
+    Optional<Client> findByIdentificationNumber(String identificationNumber);
 }

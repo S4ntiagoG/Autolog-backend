@@ -1,9 +1,12 @@
 package com.autolog.backend.service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.autolog.backend.model.Client;
 import com.autolog.backend.repository.ClientRepository;
@@ -30,6 +33,21 @@ public class ClientService {
     // Guardar o registrar un nuevo cliente
     public Client saveClient(Client client) {
         return clientRepository.save(client);
+    }
+
+    public Client getOrCreateClient(Client client) {
+        Optional<Client> clientByEmail = clientRepository.findByEmail(client.getEmail());
+        Optional<Client> clientByIdentification = clientRepository
+                .findByIdentificationNumber(client.getIdentificationNumber());
+
+        if (clientByEmail.isPresent() && clientByIdentification.isPresent()
+                && !Objects.equals(clientByEmail.get().getId(), clientByIdentification.get().getId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "El correo y el documento pertenecen a clientes diferentes");
+        }
+
+        return clientByEmail.or(() -> clientByIdentification)
+                .orElseGet(() -> clientRepository.save(client));
     }
 
     // Eliminar cliente por ID

@@ -79,7 +79,7 @@ POST http://localhost:8080/api/clients
 }
 ```
 
-Respuesta esperada: `201 Created`. Copiar el `id` de la respuesta para usarlo como `client.id` al crear el vehiculo.
+Respuesta esperada: `201 Created`. Si el correo o el documento ya pertenecen a un cliente, la API devuelve ese cliente con su ID existente en lugar de crear otro. Copiar el `id` de la respuesta para usarlo como `client.id` al crear el vehiculo.
 
 ### Consultar clientes
 
@@ -112,7 +112,7 @@ POST http://localhost:8080/api/vehicles
 }
 ```
 
-Respuesta esperada: `201 Created`. Copiar el `id` de la respuesta para usarlo como `vehicle.id` al crear la orden.
+Respuesta esperada: `201 Created`. Si la placa o el VIN ya pertenecen a un vehiculo asociado al mismo cliente, la API devuelve ese vehiculo con su ID existente. Copiar el `id` de la respuesta para usarlo como `vehicle.id` al crear una nueva orden.
 
 ### Consultar vehiculos
 
@@ -160,10 +160,10 @@ GET http://localhost:8080/api/service-orders/{serviceOrderId}
 | Metodo | Ruta | Resultado esperado |
 |---|---|---|
 | GET | `/api/clients` | Lista de clientes |
-| POST | `/api/clients` | `201 Created` |
+| POST | `/api/clients` | `201 Created`; crea o reutiliza por correo/documento |
 | GET | `/api/clients/{id}` | Cliente por ID |
 | GET | `/api/vehicles` | Lista de vehiculos |
-| POST | `/api/vehicles` | `201 Created` |
+| POST | `/api/vehicles` | `201 Created`; crea o reutiliza por placa/VIN para el mismo cliente |
 | GET | `/api/vehicles/{id}` | Vehiculo por ID |
 | GET | `/api/service-orders` | Lista de ordenes |
 | POST | `/api/service-orders` | `201 Created` |
@@ -172,10 +172,13 @@ GET http://localhost:8080/api/service-orders/{serviceOrderId}
 ## Datos importantes
 
 - Todos los requests con body deben usar `Content-Type: application/json`.
-- Primero se crea el cliente, despues el vehiculo y finalmente la orden.
+- El ingreso busca primero al cliente por correo o documento; solo crea uno si no encuentra coincidencias.
+- Luego busca el vehiculo por placa o VIN y lo reutiliza si ya esta asociado al mismo cliente; solo crea uno si no encuentra coincidencias.
+- Cada ingreso crea una nueva orden asociada al ID del vehiculo devuelto, incluso cuando se reutilizan cliente y vehiculo.
 - El vehiculo necesita un cliente existente.
 - La orden necesita un vehiculo existente dentro de `vehicle.id`.
 - `entryDate` usa el formato `YYYY-MM-DD`.
+- La API responde `409 Conflict` si el correo y el documento apuntan a clientes diferentes, si la placa y el VIN apuntan a vehiculos diferentes, o si el vehiculo encontrado pertenece a otro cliente.
 
 ## Ejecutar pruebas automatizadas
 

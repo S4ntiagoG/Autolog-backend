@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -51,6 +53,48 @@ class ClientServiceTest {
         
         // Verificar que el repositorio fue llamado exactamente una vez
         verify(clientRepository, times(1)).save(client);
+    }
+
+    @Test
+    @DisplayName("Debería reutilizar el cliente encontrado por correo")
+    void testGetOrCreateClientReusesExistingClientByEmail() {
+        Client existingClient = new Client();
+        existingClient.setId(7L);
+        existingClient.setEmail("maria@email.com");
+
+        Client incomingClient = new Client();
+        incomingClient.setEmail("maria@email.com");
+        incomingClient.setIdentificationNumber("12345");
+
+        when(clientRepository.findByEmail("maria@email.com")).thenReturn(Optional.of(existingClient));
+        when(clientRepository.findByIdentificationNumber("12345")).thenReturn(Optional.empty());
+
+        Client result = clientService.getOrCreateClient(incomingClient);
+
+        assertSame(existingClient, result);
+        assertEquals(7L, result.getId());
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
+    @Test
+    @DisplayName("Debería reutilizar el cliente encontrado por documento")
+    void testGetOrCreateClientReusesExistingClientByIdentification() {
+        Client existingClient = new Client();
+        existingClient.setId(8L);
+        existingClient.setIdentificationNumber("12345");
+
+        Client incomingClient = new Client();
+        incomingClient.setEmail("nuevo@email.com");
+        incomingClient.setIdentificationNumber("12345");
+
+        when(clientRepository.findByEmail("nuevo@email.com")).thenReturn(Optional.empty());
+        when(clientRepository.findByIdentificationNumber("12345")).thenReturn(Optional.of(existingClient));
+
+        Client result = clientService.getOrCreateClient(incomingClient);
+
+        assertSame(existingClient, result);
+        assertEquals(8L, result.getId());
+        verify(clientRepository, never()).save(any(Client.class));
     }
 
     @Test
