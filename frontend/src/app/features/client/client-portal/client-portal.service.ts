@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { API_CONFIG } from '../../core/config/api.config';
-import { ClientVehicleHomeResponse, ServiceHistoryItem, VehicleLookupRequest } from '../../core/models/api.models';
+import { API_CONFIG } from '../../../core/config/api.config';
+import { ClientVehicleHomeResponse, ServiceHistoryItem, VehicleLookupRequest } from '../../../core/models/api.models';
 
 @Injectable({ providedIn: 'root' })
 export class ClientPortalService {

@@ -7,10 +7,15 @@
     </a>
 
     <nav class="mechanic-nav" aria-label="Navegación del taller">
-      <button type="button" class="mechanic-nav__link">
+      <a
+        class="mechanic-nav__link"
+        routerLink="/dashboard"
+        routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
         <img src="/icons/tablero.svg" alt="" aria-hidden="true" />
         <span>Tablero</span>
-      </button>
+      </a>
       <button type="button" class="mechanic-nav__link">
         <img src="/icons/inventario.svg" alt="" aria-hidden="true" />
         <span>Inventario</span>

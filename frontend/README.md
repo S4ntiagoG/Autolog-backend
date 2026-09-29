@@ -1,8 +1,10 @@
-# AutoLog
+# AutoLog Frontend
 
 AutoLog es un sistema de recepción y control de vehículos para un taller mecánico. Permite registrar clientes, asociar vehículos y crear órdenes de servicio con motivo de ingreso, observaciones del cliente y evidencia fotográfica.
 
-El proyecto está dividido en dos partes:
+Aplicación Angular para la recepción de vehículos, la gestión visual del taller y el portal de consulta del cliente.
+
+El proyecto completo está dividido en dos partes:
 
 - Backend: API REST en Java + Spring Boot + PostgreSQL
 - Frontend: aplicación Angular para la captura de ingresos y consulta de vehículos/órdenes
@@ -32,9 +34,9 @@ El flujo principal del negocio es:
 1. Registrar un cliente
 2. Registrar un vehículo asociado a ese cliente
 3. Crear una orden de servicio del vehículo
-4. Consultar el historial de vehículos y órdenes
+4. Consultar el historial de mantenimientos del vehículo
 
-La aplicación permite capturar la información inicial del ingreso del vehículo y dejarla lista para que el personal del taller la revise posteriormente.
+La aplicación permite capturar la información inicial del ingreso, consultar vehículos desde el portal cliente y visualizar sus mantenimientos registrados.
 
 ## Arquitectura del proyecto
 
@@ -50,7 +52,7 @@ Autolog-backend/
 │   ├── src/app
 │   ├── package.json
 │   └── proxy.conf.json
-└── postman/          # Colección de pruebas
+└── ../backend/postman/ # Colección de pruebas
 ```
 
 ## Flujo de integración frontend-backend
@@ -63,6 +65,16 @@ La interfaz no expone un único endpoint de intake. En su lugar, el frontend rea
 
 Esta secuencia está implementada en `src/app/features/vehicle-intake/services/vehicle-intake.service.ts`.
 
+### Portal del cliente
+
+1. El cliente ingresa la placa y el documento.
+2. Angular llama a `POST /api/vehicles/search`.
+3. El backend devuelve el vehículo encontrado y su última orden.
+4. Angular consulta `GET /api/service-orders/vehicle/{vehicleId}`.
+5. La pantalla muestra el historial ordenado por fecha, con motivo, fecha, kilometraje, observaciones y total registrado.
+
+El botón `Detalles` y el nombre del mecánico están reservados para funcionalidades futuras. El botón no abre todavía el detalle de factura.
+
 ## Reglas de negocio importantes
 
 - Un vehículo siempre debe pertenecer a un cliente existente.
@@ -70,6 +82,7 @@ Esta secuencia está implementada en `src/app/features/vehicle-intake/services/v
 - La fecha de ingreso usa formato ISO: `YYYY-MM-DD`.
 - El backend no gestiona archivos multipart; la aplicación valida y previsualiza imágenes localmente, y solo envía cadenas con nombres de archivo a los campos `photoFront`, `photoRightSide`, `photoBack`, `photoOdometer` y `photoExtra`.
 - Los catálogos de formularios están centralizados en la capa de frontend porque la API no expone endpoints de catálogo.
+- El formulario de intake no captura precios. Los costos se calcularán después mediante mano de obra e inventario.
 
 ## Requisitos previos
 
@@ -147,6 +160,8 @@ El proxy de Angular reenvía las solicitudes `/api` a `http://localhost:8080`.
 | GET | `/api/service-orders` | Lista órdenes de servicio |
 | POST | `/api/service-orders` | Crea una orden de servicio |
 | GET | `/api/service-orders/{id}` | Consulta una orden por ID |
+| GET | `/api/service-orders/vehicle/{vehicleId}` | Consulta el historial del vehículo |
+| POST | `/api/vehicles/search` | Busca un vehículo por placa y documento |
 
 ## Rutas del frontend
 
@@ -155,10 +170,20 @@ La aplicación Angular define estas vistas principales en la configuración de r
 | Ruta | Descripción |
 |---|---|
 | `/vehicle-intake` | Pantalla de ingreso de vehículo y cliente para crear la recepción del taller |
+| `/service-orders/:id/edit` | Edición de una orden de servicio existente |
 | `/vehicles` | Lista general de vehículos registrados |
-| `**` | Redirige a `/vehicle-intake` cuando la ruta no existe |
+| `/mechanic/vehicles` | Acceso alternativo al listado del mecánico |
+| `/client/search` | Consulta de vehículo para el cliente |
+| `/client/home` | Portal del cliente e historial de mantenimientos |
+| `**` | Redirige a `/client/search` cuando la ruta no existe |
 
-Estas rutas se configuran en `src/app/app.routes.ts` y la aplicación inicia en la vista de recepción del vehículo.
+Estas rutas se configuran en `src/app/app.routes.ts` y la aplicación inicia en la búsqueda del vehículo del portal cliente.
+
+## Historial y costos
+
+El frontend recibe `serviceCost` como un valor opcional en cada elemento del historial. Si el backend todavía no tiene un total registrado, muestra `Sin costo registrado`.
+
+El costo no se edita desde el intake. La futura lógica de negocio debe sumar la mano de obra correspondiente al motivo de visita y los consumibles o repuestos registrados en inventario.
 
 ## Ejemplo de estructura JSON para crear una orden
 

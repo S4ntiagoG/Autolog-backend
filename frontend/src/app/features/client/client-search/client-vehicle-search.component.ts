@@ -4,8 +4,8 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { colombianPlateValidator } from '../../core/colombian-plate.validator';
-import { ClientPortalService } from './client-portal.service';
+import { colombianPlateValidator } from '../../../core/colombian-plate.validator';
+import { ClientPortalService } from '../client-portal/client-portal.service';
 
 @Component({
   selector: 'app-client-vehicle-search',

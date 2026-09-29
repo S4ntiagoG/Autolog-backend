@@ -1,0 +1,120 @@
+<main class="dashboard-page">
+  @if (error()) {
+    <div class="dashboard-alert">
+      {{ error() }}
+    </div>
+  }
+
+  <section class="dashboard-shell">
+    <header class="dashboard-header">
+      <div>
+        <h1>Vista General</h1>
+        <p>Estado del taller en tiempo real</p>
+      </div>
+    </header>
+
+    <div class="stats-grid">
+      <article class="stat-card">
+        <div class="stat-card__top">
+          <span>Servicios activos</span>
+          <span class="stat-card__icon">↻</span>
+        </div>
+        <div class="stat-card__value">
+          <strong>{{ stats().activeServices }}</strong>
+          <small>+2</small>
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-card__top">
+          <span>Tareas pendientes</span>
+          <span class="stat-card__icon">▣</span>
+        </div>
+        <div class="stat-card__value">
+          <strong>{{ stats().pendingTasks }}</strong>
+          <small>Requieren acciones</small>
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-card__top">
+          <span>Completado hoy</span>
+          <span class="stat-card__icon">✓</span>
+        </div>
+        <div class="stat-card__value">
+          <strong>{{ stats().completedToday }}</strong>
+          <small>Vehículos despachados</small>
+        </div>
+      </article>
+    </div>
+
+    <div class="content-grid">
+      <section class="panel panel--vehicles">
+        <div class="panel-header">
+          <h2>Vehículos en el Taller</h2>
+          <a routerLink="/vehicles">VER TODOS →</a>
+        </div>
+
+        @if (loading()) {
+          <div class="loading-state">Cargando vehículos...</div>
+        } @else {
+          <div class="vehicle-list">
+            @for (vehicle of visibleVehicles(); track vehicle.id) {
+              <article class="vehicle-row">
+                <div class="vehicle-row__identity">
+                  <div class="vehicle-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M5 14.5L7 9.5H17L19 14.5M5 14.5V16.5H19V14.5M7 9.5V7.5H17V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                      <circle cx="8" cy="17" r="1.7" stroke="currentColor" stroke-width="1.8"/>
+                      <circle cx="16" cy="17" r="1.7" stroke="currentColor" stroke-width="1.8"/>
+                    </svg>
+                  </div>
+
+                  <div class="vehicle-meta">
+                    <div class="vehicle-brand-line">
+                      <span class="vehicle-name">{{ vehicle.brand }} {{ vehicle.model }}</span>
+                    </div>
+                    <div class="vehicle-subline">
+                      <span>VIN: {{ vehicle.id }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="vehicle-row__plate-wrap">
+                  <span class="license-plate">{{ vehicle.plate }}</span>
+                </div>
+
+                <div class="vehicle-row__service">
+                  <span class="service-label">{{ getVehicleServiceLabel(vehicle) }}</span>
+                </div>
+
+                <span class="status-badge" [ngClass]="getStatusClass(vehicle.status)">
+                  {{ vehicle.status }}
+                </span>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <aside class="panel panel--activity">
+        <div class="panel-header panel-header--activity">
+          <h2>Actividad Reciente</h2>
+        </div>
+
+        <ul class="activity-list">
+          @for (item of recentActivity; track item.label) {
+            <li class="activity-item">
+              <span class="activity-dot activity-dot--{{ item.tone }}" aria-hidden="true"></span>
+              <div>
+                <time>{{ item.time }}</time>
+                <strong>{{ item.label }}</strong>
+                <p>{{ item.description }}</p>
+              </div>
+            </li>
+          }
+        </ul>
+      </aside>
+    </div>
+  </section>
+</main>

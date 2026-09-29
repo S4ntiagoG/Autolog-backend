@@ -4,13 +4,13 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'client/search'
+    redirectTo: 'dashboard'
   },
   {
     path: 'client/search',
     title: 'AUTOLOG · Cliente',
     loadComponent: () =>
-      import('./features/client-portal/client-vehicle-search.component').then(
+      import('./features/client/client-search/client-vehicle-search.component').then(
         ({ ClientVehicleSearchComponent }) => ClientVehicleSearchComponent
       )
   },
@@ -18,7 +18,7 @@ export const routes: Routes = [
     path: 'client/home',
     title: 'AUTOLOG · Portal del cliente',
     loadComponent: () =>
-      import('./features/client-portal/client-home.component').then(
+      import('./features/client/client-portal/client-home.component').then(
         ({ ClientHomeComponent }) => ClientHomeComponent
       )
   },
@@ -29,6 +29,14 @@ export const routes: Routes = [
         ({ MechanicLayoutComponent }) => MechanicLayoutComponent
       ),
     children: [
+      {
+        path: 'dashboard',
+        title: 'AUTOLOG · Tablero',
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.component').then(
+            ({ DashboardComponent }) => DashboardComponent
+          )
+      },
       {
         path: 'vehicle-intake',
         title: 'AUTOLOG · Ingreso de vehículo',

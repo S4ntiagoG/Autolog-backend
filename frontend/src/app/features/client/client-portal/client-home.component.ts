@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
-import { ClientVehicleHomeResponse, ServiceHistoryItem } from '../../core/models/api.models';
+import { ClientVehicleHomeResponse, ServiceHistoryItem } from '../../../core/models/api.models';
 import { ClientPortalService } from './client-portal.service';
 
 type ClientTab = 'HISTORY' | 'TRACKING';
