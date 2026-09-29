@@ -2,5 +2,7 @@ export const API_CONFIG = {
   baseUrl: '/api',
   clientsPath: '/clients',
   vehiclesPath: '/vehicles',
-  serviceOrdersPath: '/service-orders'
+  vehicleSearchPath: '/vehicles/search',
+  serviceOrdersPath: '/service-orders',
+  vehicleHistoryPath: '/service-orders/vehicle'
 } as const;

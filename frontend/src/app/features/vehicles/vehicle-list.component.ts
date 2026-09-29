@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { MechanicVehicleItem, VehicleStatus } from './models/vehicle-mechanic.models';
 import { VehicleMechanicService } from './services/vehicle-mechanic.service';
@@ -18,6 +18,7 @@ interface ActionModalData {
   styleUrl: './vehicle-list.component.css'
 })
 export class VehicleListComponent implements OnInit {
+  private readonly router = inject(Router);
   private readonly mechanicService = inject(VehicleMechanicService);
 
   readonly allVehicles = signal<MechanicVehicleItem[]>([]);
@@ -158,6 +159,12 @@ export class VehicleListComponent implements OnInit {
   }
 
   openActionModal(type: 'EDIT' | 'HISTORY' | 'SERVICE', vehicle: MechanicVehicleItem): void {
+    if (type === 'EDIT') {
+      if (vehicle.serviceOrderId) {
+        void this.router.navigate(['/service-orders', vehicle.serviceOrderId, 'edit']);
+      }
+      return;
+    }
     this.modalState.set({ type, vehicle });
   }
 

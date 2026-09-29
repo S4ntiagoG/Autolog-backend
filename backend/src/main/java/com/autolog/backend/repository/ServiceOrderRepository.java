@@ -11,5 +11,7 @@ import com.autolog.backend.model.ServiceOrder;
 public interface ServiceOrderRepository extends JpaRepository<ServiceOrder, Long> {
     
     // Método útil para buscar todas las órdenes asociadas a un vehículo específico por su ID
-    List<ServiceOrder> findByVehicleId(Long vehicleId);
+    List<ServiceOrder> findByVehicleIdOrderByEntryDateDescIdDesc(Long vehicleId);
+
+    java.util.Optional<ServiceOrder> findFirstByVehicleIdOrderByEntryDateDescIdDesc(Long vehicleId);
 }

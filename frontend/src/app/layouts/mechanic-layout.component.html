@@ -1,0 +1,40 @@
+<div class="mechanic-layout">
+  <aside class="mechanic-sidebar">
+    <a class="mechanic-brand" routerLink="/vehicles" aria-label="Ciclo Motor La Villa, ir a vehículos">
+      <img src="/ciclo-motor-la-villa.jpeg" alt="Ciclo Motor La Villa" />
+      <span class="mechanic-brand__caption">POWER BY</span>
+      <strong>AUTOLOG</strong>
+    </a>
+
+    <nav class="mechanic-nav" aria-label="Navegación del taller">
+      <button type="button" class="mechanic-nav__link">
+        <img src="/icons/tablero.svg" alt="" aria-hidden="true" />
+        <span>Tablero</span>
+      </button>
+      <button type="button" class="mechanic-nav__link">
+        <img src="/icons/inventario.svg" alt="" aria-hidden="true" />
+        <span>Inventario</span>
+      </button>
+      <a
+        class="mechanic-nav__link"
+        routerLink="/vehicles"
+        routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <img src="/icons/vehiculos%20.svg" alt="" aria-hidden="true" />
+        <span>Vehículos</span>
+      </a>
+    </nav>
+
+    <div class="mechanic-sidebar__footer">
+      <a routerLink="/vehicle-intake">
+        <span aria-hidden="true">+</span>
+        Registrar nuevo vehículo
+      </a>
+    </div>
+  </aside>
+
+  <div class="mechanic-content">
+    <router-outlet />
+  </div>
+</div>

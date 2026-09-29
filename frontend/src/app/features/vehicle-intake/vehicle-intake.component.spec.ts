@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { ServiceOrderResponse } from '../../core/models/api.models';
@@ -57,13 +57,14 @@ describe('VehicleIntakeComponent', () => {
     expect(intakeService.createIntake).not.toHaveBeenCalled();
   });
 
-  it('resets the form and clears messages when cancelled', () => {
+  it('navigates to the vehicle list when cancelled', () => {
     component.form.patchValue({ vehicle: { plate: 'ABC123' }, customer: { name: 'Cliente' } });
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
 
     component.cancel();
 
-    expect(component.form.getRawValue().vehicle.plate).toBe('');
-    expect(component.form.getRawValue().customer.name).toBe('');
+    expect(router.navigate).toHaveBeenCalledWith(['/vehicles']);
     expect(intakeService.createIntake).not.toHaveBeenCalled();
   });
 

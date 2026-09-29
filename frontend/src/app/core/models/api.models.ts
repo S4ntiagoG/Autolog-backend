@@ -24,11 +24,37 @@ export interface VehicleResponse extends Omit<VehicleRequest, 'client'> {
   client: ClientResponse;
 }
 
+export interface VehicleLookupRequest {
+  plate: string;
+  identificationNumber: string;
+}
+
+export interface ClientVehicleHomeResponse {
+  vehicleId: number;
+  vehicleType: string;
+  brand: string;
+  model: string;
+  vehicleYear: number;
+  plate: string;
+  orderNumber: string | null;
+  status: string;
+}
+
+export interface ServiceHistoryItem {
+  serviceOrderId: number;
+  entryDate: string;
+  primaryReason: string;
+  currentMileage: number;
+  customerObservations: string | null;
+  serviceCost: number | null;
+}
+
 export interface ServiceOrderRequest {
   entryDate: string;
   primaryReason: string;
   currentMileage: number;
   customerObservations: string;
+  serviceCost?: number | null;
   photoFront?: string;
   photoRightSide?: string;
   photoBack?: string;
@@ -40,6 +66,12 @@ export interface ServiceOrderRequest {
 export interface ServiceOrderResponse extends ServiceOrderRequest {
   id: number;
   vehicle: VehicleResponse;
+}
+
+export interface ServiceOrderUpdateRequest {
+  primaryReason: string;
+  currentMileage: number;
+  customerObservations: string;
 }
 
 export interface VehicleIntakeDraft {

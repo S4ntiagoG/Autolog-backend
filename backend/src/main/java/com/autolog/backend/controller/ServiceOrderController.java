@@ -1,5 +1,6 @@
 package com.autolog.backend.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -9,10 +10,12 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.autolog.backend.dto.ServiceHistoryItem;
 import com.autolog.backend.model.ServiceOrder;
 import com.autolog.backend.model.Vehicle;
 import com.autolog.backend.repository.VehicleRepository;
@@ -46,6 +49,14 @@ public class ServiceOrderController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
+    @GetMapping("/vehicle/{vehicleId}")
+    public ResponseEntity<List<ServiceHistoryItem>> getVehicleHistory(@PathVariable Long vehicleId) {
+        if (!vehicleRepository.existsById(vehicleId)) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(serviceOrderService.getHistoryByVehicleId(vehicleId));
+    }
+
     // 3. Registrar una nueva entrada / orden de servicio (Recepción del vehículo)
     @PostMapping
     public ResponseEntity<ServiceOrder> createServiceOrder(@RequestBody ServiceOrder serviceOrder) {
@@ -64,6 +75,20 @@ public class ServiceOrderController {
         serviceOrder.setVehicle(vehicle);
         ServiceOrder savedOrder = serviceOrderService.saveServiceOrder(serviceOrder);
         return new ResponseEntity<>(savedOrder, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ServiceOrder> updateServiceOrder(@PathVariable Long id,
+            @RequestBody ServiceOrder serviceOrder) {
+        return serviceOrderService.getServiceOrderById(id)
+                .map(existing -> {
+                    existing.setEntryDate(LocalDate.now());
+                    existing.setPrimaryReason(serviceOrder.getPrimaryReason());
+                    existing.setCurrentMileage(serviceOrder.getCurrentMileage());
+                    existing.setCustomerObservations(serviceOrder.getCustomerObservations());
+                    return ResponseEntity.ok(serviceOrderService.saveServiceOrder(existing));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     // 4. Eliminar una orden de servicio

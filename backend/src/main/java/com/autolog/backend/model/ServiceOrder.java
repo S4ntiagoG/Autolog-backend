@@ -1,6 +1,7 @@
 package com.autolog.backend.model;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -34,6 +35,9 @@ public class ServiceOrder {
 
     @Column(nullable = false)
     private Integer currentMileage; // Kilometraje actual (KM/MI)
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal serviceCost; // Costo total registrado para el mantenimiento
 
     @Column(columnDefinition = "TEXT")
     private String customerObservations; // Observaciones y comentarios del cliente

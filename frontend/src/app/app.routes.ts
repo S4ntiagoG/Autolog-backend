@@ -4,28 +4,64 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'vehicle-intake'
+    redirectTo: 'client/search'
   },
   {
-    path: 'vehicle-intake',
+    path: 'client/search',
+    title: 'AUTOLOG · Cliente',
     loadComponent: () =>
-      import('./features/vehicle-intake/vehicle-intake.component').then(
-        ({ VehicleIntakeComponent }) => VehicleIntakeComponent
+      import('./features/client-portal/client-vehicle-search.component').then(
+        ({ ClientVehicleSearchComponent }) => ClientVehicleSearchComponent
       )
   },
   {
-    path: 'vehicles',
+    path: 'client/home',
+    title: 'AUTOLOG · Portal del cliente',
     loadComponent: () =>
-      import('./features/vehicles/vehicle-list.component').then(
-        ({ VehicleListComponent }) => VehicleListComponent
+      import('./features/client-portal/client-home.component').then(
+        ({ ClientHomeComponent }) => ClientHomeComponent
       )
   },
   {
-    path: 'mechanic/vehicles',
+    path: '',
     loadComponent: () =>
-      import('./features/vehicles/vehicle-list.component').then(
-        ({ VehicleListComponent }) => VehicleListComponent
-      )
+      import('./layouts/mechanic-layout.component').then(
+        ({ MechanicLayoutComponent }) => MechanicLayoutComponent
+      ),
+    children: [
+      {
+        path: 'vehicle-intake',
+        title: 'AUTOLOG · Ingreso de vehículo',
+        loadComponent: () =>
+          import('./features/vehicle-intake/vehicle-intake.component').then(
+            ({ VehicleIntakeComponent }) => VehicleIntakeComponent
+          )
+      },
+      {
+        path: 'service-orders/:id/edit',
+        title: 'AUTOLOG · Editar servicio',
+        loadComponent: () =>
+          import('./features/vehicle-intake/vehicle-intake.component').then(
+            ({ VehicleIntakeComponent }) => VehicleIntakeComponent
+          )
+      },
+      {
+        path: 'vehicles',
+        title: 'AUTOLOG · Vehículos',
+        loadComponent: () =>
+          import('./features/vehicles/vehicle-list.component').then(
+            ({ VehicleListComponent }) => VehicleListComponent
+          )
+      },
+      {
+        path: 'mechanic/vehicles',
+        title: 'AUTOLOG · Vehículos del mecánico',
+        loadComponent: () =>
+          import('./features/vehicles/vehicle-list.component').then(
+            ({ VehicleListComponent }) => VehicleListComponent
+          )
+      }
+    ]
   },
-  { path: '**', redirectTo: 'vehicle-intake' }
+  { path: '**', redirectTo: 'client/search' }
 ];

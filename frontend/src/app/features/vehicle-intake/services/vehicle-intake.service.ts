@@ -8,6 +8,7 @@ import {
   ClientResponse,
   ServiceOrderRequest,
   ServiceOrderResponse,
+  ServiceOrderUpdateRequest,
   VehicleIntakeDraft,
   VehicleRequest,
   VehicleResponse
@@ -28,6 +29,18 @@ export class VehicleIntakeService {
 
   getVehicles(): Observable<VehicleResponse[]> {
     return this.http.get<VehicleResponse[]>(`${this.baseUrl}${API_CONFIG.vehiclesPath}`);
+  }
+
+  getVehicle(id: number): Observable<VehicleResponse> {
+    return this.http.get<VehicleResponse>(`${this.baseUrl}${API_CONFIG.vehiclesPath}/${id}`);
+  }
+
+  getServiceOrders(): Observable<ServiceOrderResponse[]> {
+    return this.http.get<ServiceOrderResponse[]>(`${this.baseUrl}${API_CONFIG.serviceOrdersPath}`);
+  }
+
+  getServiceOrder(id: number): Observable<ServiceOrderResponse> {
+    return this.http.get<ServiceOrderResponse>(`${this.baseUrl}${API_CONFIG.serviceOrdersPath}/${id}`);
   }
 
   createIntake(draft: VehicleIntakeDraft, evidence: IntakeEvidenceNames): Observable<ServiceOrderResponse> {
@@ -52,6 +65,33 @@ export class VehicleIntakeService {
           serviceOrderRequest
         );
       })
+    );
+  }
+
+  updateIntake(vehicle: VehicleResponse, order: ServiceOrderResponse, draft: VehicleIntakeDraft): Observable<ServiceOrderResponse> {
+    const clientRequest: ClientRequest = draft.customer;
+    const vehicleRequest: VehicleRequest = {
+      ...draft.vehicle,
+      client: { id: vehicle.client.id }
+    };
+    const orderRequest: ServiceOrderUpdateRequest = {
+      primaryReason: draft.entry.primaryReason,
+      currentMileage: draft.entry.currentMileage,
+      customerObservations: draft.entry.customerObservations
+    };
+
+    return this.http.put<ClientResponse>(
+      `${this.baseUrl}${API_CONFIG.clientsPath}/${vehicle.client.id}`,
+      clientRequest
+    ).pipe(
+      switchMap(() => this.http.put<VehicleResponse>(
+        `${this.baseUrl}${API_CONFIG.vehiclesPath}/${vehicle.id}`,
+        vehicleRequest
+      )),
+      switchMap(() => this.http.put<ServiceOrderResponse>(
+        `${this.baseUrl}${API_CONFIG.serviceOrdersPath}/${order.id}`,
+        orderRequest
+      ))
     );
   }
 

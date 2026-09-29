@@ -36,7 +36,7 @@ class ServiceOrderServiceTest {
         // Arrange
         Vehicle vehicle = new Vehicle();
         vehicle.setId(1L);
-        vehicle.setPlate("XYZ-99A");
+        vehicle.setPlate("XYZ99A");
 
         ServiceOrder order = new ServiceOrder();
         order.setId(1L);

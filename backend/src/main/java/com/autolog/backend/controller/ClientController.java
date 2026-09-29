@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,6 +48,19 @@ public class ClientController {
     public ResponseEntity<Client> createClient(@RequestBody Client client) {
         Client savedClient = clientService.getOrCreateClient(client);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedClient);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Client> updateClient(@PathVariable Long id, @RequestBody Client client) {
+        return clientService.getClientById(id)
+                .map(existing -> {
+                    existing.setName(client.getName());
+                    existing.setIdentificationNumber(client.getIdentificationNumber());
+                    existing.setEmail(client.getEmail());
+                    existing.setPhone(client.getPhone());
+                    return ResponseEntity.ok(clientService.saveClient(existing));
+                })
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     // DELETE: Eliminar un cliente -> http://localhost:8080/api/clients/{id}

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { VehicleListComponent } from './vehicle-list.component';
@@ -9,6 +9,7 @@ import { MechanicVehicleItem } from './models/vehicle-mechanic.models';
 const MOCK_ITEMS: MechanicVehicleItem[] = [
   {
     id: 1,
+    serviceOrderId: 11,
     plate: 'B7X-982',
     brand: 'Toyota',
     model: 'Corolla',
@@ -20,7 +21,8 @@ const MOCK_ITEMS: MechanicVehicleItem[] = [
   },
   {
     id: 2,
-    plate: 'ABC-123',
+    serviceOrderId: 22,
+    plate: 'ABC123',
     brand: 'Honda',
     model: 'Civic',
     vehicleYear: 2020,
@@ -31,6 +33,7 @@ const MOCK_ITEMS: MechanicVehicleItem[] = [
   },
   {
     id: 3,
+    serviceOrderId: null,
     plate: 'XYZ-789',
     brand: 'Ford',
     model: 'F-150',
@@ -81,13 +84,20 @@ describe('VehicleListComponent', () => {
     expect(component.filteredVehicles()[0].status).toBe('EN PROGRESO');
   });
 
-  it('opens and closes action modal', () => {
-    component.openActionModal('EDIT', MOCK_ITEMS[0]);
-    expect(component.modalState()?.type).toBe('EDIT');
-    expect(component.modalState()?.vehicle.plate).toBe('B7X-982');
+  it('navigates to edit the latest service order', () => {
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
 
-    component.closeModal();
-    expect(component.modalState()).toBeNull();
+    component.openActionModal('EDIT', MOCK_ITEMS[0]);
+    expect(router.navigate).toHaveBeenCalledWith(['/service-orders', 11, 'edit']);
+  });
+
+  it('does not navigate to edit when the vehicle has no service order', () => {
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+
+    component.openActionModal('EDIT', MOCK_ITEMS[2]);
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('updates vehicle status successfully', () => {

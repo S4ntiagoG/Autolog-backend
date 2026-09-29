@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, ElementRef, OnDestroy, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { map, switchMap } from 'rxjs';
 
-import { VehicleIntakeDraft } from '../../core/models/api.models';
+import { ServiceOrderResponse, VehicleIntakeDraft, VehicleResponse } from '../../core/models/api.models';
+import { colombianPlateValidator } from '../../core/colombian-plate.validator';
 import {
   MAX_EVIDENCE_IMAGES,
   MAX_IMAGE_SIZE_BYTES,
@@ -27,8 +29,9 @@ interface SelectedImage {
   templateUrl: './vehicle-intake.component.html',
   styleUrl: './vehicle-intake.component.css'
 })
-export class VehicleIntakeComponent implements OnDestroy {
+export class VehicleIntakeComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly intakeService = inject(VehicleIntakeService);
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
@@ -47,12 +50,17 @@ export class VehicleIntakeComponent implements OnDestroy {
   readonly successMessage = signal('');
   readonly errorMessage = signal('');
   readonly evidenceMessage = signal('');
+  readonly isEditing = signal(false);
+  readonly loadingRecord = signal(false);
+  readonly recordLoaded = signal(false);
+  readonly editingVehicle = signal<VehicleResponse | null>(null);
+  readonly editingOrder = signal<ServiceOrderResponse | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     vehicle: this.fb.nonNullable.group({
       vehicleType: ['', Validators.required],
       brand: ['', Validators.required],
-      plate: ['', [Validators.required, Validators.pattern(/\S+/)]],
+      plate: ['', [Validators.required, colombianPlateValidator]],
       chassisNumber: ['', Validators.required],
       model: ['', Validators.required],
       vehicleYear: [this.currentYear, [Validators.required, Validators.min(1886), Validators.max(this.currentYear + 1)]]
@@ -75,6 +83,14 @@ export class VehicleIntakeComponent implements OnDestroy {
     this.revokeImageUrls(this.selectedImages());
   }
 
+  ngOnInit(): void {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (Number.isInteger(id) && id > 0) {
+      this.isEditing.set(true);
+      this.loadIntake(id);
+    }
+  }
+
   save(): void {
     this.submitted.set(true);
     this.successMessage.set('');
@@ -93,9 +109,22 @@ export class VehicleIntakeComponent implements OnDestroy {
       entry: raw.entry
     };
 
-    this.intakeService.createIntake(draft, this.evidenceNames()).subscribe({
-      next: () => {
+    const vehicle = this.editingVehicle();
+    const order = this.editingOrder();
+    const saveRequest = vehicle && order
+      ? this.intakeService.updateIntake(vehicle, order, draft)
+      : this.intakeService.createIntake(draft, this.evidenceNames());
+
+    saveRequest.subscribe({
+      next: (savedOrder) => {
         this.loading.set(false);
+        if (this.isEditing()) {
+          this.editingOrder.set(savedOrder);
+          this.form.controls.entry.controls.entryDate.setValue(savedOrder.entryDate);
+          this.successMessage.set('Cambios guardados correctamente. La fecha se actualizó automáticamente.');
+          return;
+        }
+
         this.successMessage.set('Ingreso registrado correctamente. Abriendo el listado de vehículos…');
         window.setTimeout(() => void this.router.navigate(['/vehicles']), 900);
       },
@@ -111,38 +140,58 @@ export class VehicleIntakeComponent implements OnDestroy {
       return;
     }
 
-    this.form.reset({
-      vehicle: {
-        vehicleType: '',
-        brand: '',
-        plate: '',
-        chassisNumber: '',
-        model: '',
-        vehicleYear: this.currentYear
+    void this.router.navigate(['/vehicles']);
+  }
+
+  private loadIntake(id: number): void {
+    this.loadingRecord.set(true);
+    this.intakeService.getServiceOrder(id).pipe(
+      switchMap((order) => this.intakeService.getVehicle(order.vehicle.id).pipe(
+        map((vehicle) => ({ vehicle, order }))
+      ))
+    ).subscribe({
+      next: ({ vehicle, order }) => {
+        this.editingVehicle.set(vehicle);
+        this.editingOrder.set(order);
+        this.recordLoaded.set(true);
+        this.form.reset({
+          vehicle: {
+            vehicleType: vehicle.vehicleType,
+            brand: vehicle.brand,
+            plate: vehicle.plate,
+            chassisNumber: vehicle.chassisNumber,
+            model: vehicle.model,
+            vehicleYear: vehicle.vehicleYear
+          },
+          customer: {
+            name: vehicle.client.name,
+            identificationNumber: vehicle.client.identificationNumber,
+            phone: vehicle.client.phone,
+            email: vehicle.client.email
+          },
+          entry: {
+            entryDate: order.entryDate,
+            primaryReason: order.primaryReason,
+            currentMileage: order.currentMileage,
+            customerObservations: order.customerObservations || ''
+          }
+        });
+        this.loadingRecord.set(false);
       },
-      customer: {
-        name: '',
-        identificationNumber: '',
-        phone: '',
-        email: ''
-      },
-      entry: {
-        entryDate: this.currentDateAsIso(),
-        primaryReason: '',
-        currentMileage: 0,
-        customerObservations: ''
+      error: (error: unknown) => {
+        this.errorMessage.set(this.getFriendlyError(error));
+        this.loadingRecord.set(false);
       }
     });
-    this.submitted.set(false);
-    this.successMessage.set('');
-    this.errorMessage.set('');
-    this.evidenceMessage.set('');
-    this.clearImages();
   }
 
   showError(path: string): boolean {
     const control = this.form.get(path);
     return Boolean(control?.invalid && (control.touched || this.submitted()));
+  }
+
+  hasOption(options: readonly string[], value: string): boolean {
+    return options.includes(value);
   }
 
   errorFor(path: string): string {
@@ -165,7 +214,23 @@ export class VehicleIntakeComponent implements OnDestroy {
     if (control.hasError('pattern')) {
       return 'Ingresa un valor válido.';
     }
+    if (control.hasError('invalidColombianPlate')) {
+      return 'Formato inválido. Ejemplos: ABC123, ABC12D, ABC12, R12345 o CD1234.';
+    }
     return 'Revisa este campo.';
+  }
+
+  normalizePlateInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const normalized = input.value.toUpperCase();
+    if (input.value !== normalized) {
+      const cursorPosition = input.selectionStart;
+      input.value = normalized;
+      this.form.controls.vehicle.controls.plate.setValue(normalized);
+      if (cursorPosition !== null) {
+        input.setSelectionRange(cursorPosition, cursorPosition);
+      }
+    }
   }
 
   private currentDateAsIso(): string {

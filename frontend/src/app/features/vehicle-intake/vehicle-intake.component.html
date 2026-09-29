@@ -5,8 +5,13 @@
     p-5 rounded-xl border border-neutral-800/60 border-b-2 border-b-[#D32F2F] bg-[#1E0F0E] p-5 sm:p-6 shadow-xl">
       <div>
         <p class="mb-1 text-xs font-semibold uppercase tracking-[0.24em] text-red-500">CICLO MOTOR by AUTOLOG</p>
-        <h1 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Vehicle Intake</h1>
-        <p class="mt-1 text-xs text-neutral-400">Registra los datos del vehículo y deja constancia de sus condiciones de recepción.</p>
+        <h1 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          @if (isEditing()) { Editar vehículo } @else { Vehicle Intake }
+        </h1>
+        <p class="mt-1 text-xs text-neutral-400">
+          @if (isEditing()) { Actualiza los datos registrados del vehículo y su propietario. }
+          @else { Registra los datos del vehículo y deja constancia de sus condiciones de recepción. }
+        </p>
       </div>
       <div class="flex flex-wrap items-center gap-3 sm:gap-4">
         <!-- Fecha actual del sistema colocada a la derecha dentro del recuadro rojo -->
@@ -49,6 +54,13 @@
       </div>
     }
 
+    @if (loadingRecord()) {
+      <div role="status" class="mb-6 rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+        Cargando los datos actuales del vehículo…
+      </div>
+    }
+
+    @if (!loadingRecord() && (!isEditing() || recordLoaded())) {
     <form [formGroup]="form" (ngSubmit)="save()" novalidate>
       <div class="space-y-6">
         <section formGroupName="vehicle" class="rounded-2xl border border-neutral-800 bg-neutral-900 p-5 shadow-2xl shadow-black/10 sm:p-7">
@@ -65,6 +77,9 @@
               <label for="vehicleType" class="field-label">Tipo de vehículo</label>
               <select id="vehicleType" formControlName="vehicleType" class="field-input" [class.field-invalid]="showError('vehicle.vehicleType')">
                 <option value="">Selecciona un vehículo</option>
+                @if (isEditing() && editingVehicle()?.vehicleType && !hasOption(vehicleTypes, editingVehicle()!.vehicleType)) {
+                  <option [value]="editingVehicle()!.vehicleType">{{ editingVehicle()!.vehicleType }}</option>
+                }
                 @for (type of vehicleTypes; track type) {
                   <option [value]="type">{{ type }}</option>
                 }
@@ -75,13 +90,16 @@
               <label for="brand" class="field-label">Marca / fabricante</label>
               <select id="brand" formControlName="brand" class="field-input" [class.field-invalid]="showError('vehicle.brand')">
                 <option value="">Selecciona una marca</option>
+                @if (isEditing() && editingVehicle()?.brand && !hasOption(vehicleBrands, editingVehicle()!.brand)) {
+                  <option [value]="editingVehicle()!.brand">{{ editingVehicle()!.brand }}</option>
+                }
                 @for (brand of vehicleBrands; track brand) { <option [value]="brand">{{ brand }}</option> }
               </select>
               @if (showError('vehicle.brand')) { <p class="field-error">{{ errorFor('vehicle.brand') }}</p> }
             </div>
             <div>
               <label for="plate" class="field-label">Placa <span class="text-red-500">*</span></label>
-              <input id="plate" formControlName="plate" class="field-input uppercase" autocomplete="off" placeholder="Ej. ABC123" [class.field-invalid]="showError('vehicle.plate')" />
+              <input id="plate" formControlName="plate" (input)="normalizePlateInput($event)" class="field-input uppercase" autocomplete="off" maxlength="6" placeholder="Ej. ABC123 o ABC12D" [class.field-invalid]="showError('vehicle.plate')" />
               @if (showError('vehicle.plate')) { <p class="field-error">{{ errorFor('vehicle.plate') }}</p> }
             </div>
             <div>
@@ -146,7 +164,10 @@
 
           <div class="grid gap-5 md:grid-cols-3">
             <div>
-              <label for="entryDate" class="field-label">Fecha de ingreso (Sistema) <span class="text-red-500">*</span></label>
+              <label for="entryDate" class="field-label">
+                @if (isEditing()) { Fecha de ingreso / corrección (Sistema) } @else { Fecha de ingreso (Sistema) }
+                <span class="text-red-500">*</span>
+              </label>
               <input
                 id="entryDate"
                 formControlName="entryDate"
@@ -154,12 +175,18 @@
                 class="field-input cursor-not-allowed bg-neutral-800/90 text-neutral-200"
                 readonly
               />
-              <p class="mt-1 text-[11px] text-neutral-400">Asignada automáticamente con la fecha del sistema.</p>
+              <p class="mt-1 text-[11px] text-neutral-400">
+                @if (isEditing()) { Se actualiza automáticamente al guardar los cambios. }
+                @else { Asignada automáticamente con la fecha del sistema. }
+              </p>
             </div>
             <div>
               <label for="primaryReason" class="field-label">Motivo principal de visita <span class="text-red-500">*</span></label>
               <select id="primaryReason" formControlName="primaryReason" class="field-input" [class.field-invalid]="showError('entry.primaryReason')">
                 <option value="">Selecciona un motivo</option>
+                @if (isEditing() && editingOrder()?.primaryReason && !hasOption(visitReasons, editingOrder()!.primaryReason)) {
+                  <option [value]="editingOrder()!.primaryReason">{{ editingOrder()!.primaryReason }}</option>
+                }
                 @for (reason of visitReasons; track reason) { <option [value]="reason">{{ reason }}</option> }
               </select>
               @if (showError('entry.primaryReason')) { <p class="field-error">{{ errorFor('entry.primaryReason') }}</p> }
@@ -181,10 +208,15 @@
             <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-950 text-sm font-bold text-red-400">04</span>
             <div>
               <h2 class="text-lg font-semibold">Evidencia Fotográfica</h2>
-              <p class="mt-1 text-sm text-neutral-400">Adjunta hasta {{ maxEvidenceImages }} imágenes para documentar la recepción.</p>
+              @if (isEditing()) {
+                <p class="mt-1 text-sm text-neutral-400">Las evidencias fotográficas existentes se conservarán sin cambios.</p>
+              } @else {
+                <p class="mt-1 text-sm text-neutral-400">Adjunta hasta {{ maxEvidenceImages }} imágenes para documentar la recepción.</p>
+              }
             </div>
           </div>
 
+          @if (!isEditing()) {
           <button type="button" class="flex w-full flex-col items-center justify-center rounded-xl border border-dashed border-neutral-700 bg-neutral-950/60 px-5 py-8 text-center transition hover:border-red-500/70 hover:bg-neutral-950" (click)="fileInput.click()" (dragover)="onDragOver($event)" (drop)="onDrop($event)">
             <span class="mb-3 text-3xl text-red-500">＋</span>
             <span class="font-semibold text-neutral-200">Arrastra imágenes aquí o haz clic para seleccionar</span>
@@ -205,15 +237,17 @@
             </div>
           }
           <p class="mt-4 text-xs text-neutral-500">Las imágenes se previsualizan localmente. El backend actual no cuenta con un endpoint de carga binaria; se conservarán localmente y sus nombres acompañarán el registro.</p>
+          }
         </section>
 
         <section class="flex flex-col-reverse gap-3 border-t border-neutral-800 pt-6 sm:flex-row sm:justify-end">
           <button type="button" class="rounded-lg border border-neutral-700 px-5 py-3 text-sm font-bold text-neutral-300 transition hover:border-neutral-500 hover:bg-neutral-900 hover:text-white disabled:cursor-not-allowed disabled:opacity-50" [disabled]="loading()" (click)="cancel()">CANCELAR</button>
-          <button type="submit" class="rounded-lg bg-red-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-red-950/30 transition hover:bg-red-700 disabled:cursor-wait disabled:opacity-60" [disabled]="loading()">
-            @if (loading()) { Guardando… } @else { GUARDAR VEHÍCULO }
+          <button type="submit" class="rounded-lg bg-red-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-red-950/30 transition hover:bg-red-700 disabled:cursor-wait disabled:opacity-60" [disabled]="loading() || loadingRecord()">
+            @if (loading()) { Guardando… } @else if (isEditing()) { GUARDAR CAMBIOS } @else { GUARDAR VEHÍCULO }
           </button>
         </section>
       </div>
     </form>
+    }
   </div>
 </main>

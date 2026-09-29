@@ -2,6 +2,7 @@ export type VehicleStatus = 'LISTO' | 'EN PROGRESO' | 'PENDIENTE';
 
 export interface MechanicVehicleItem {
   id: number;
+  serviceOrderId: number | null;
   plate: string;
   brand: string;
   model: string;

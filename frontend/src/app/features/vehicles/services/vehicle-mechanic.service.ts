@@ -44,6 +44,7 @@ export class VehicleMechanicService {
 
           return {
             id: v.id,
+            serviceOrderId: latestOrder?.id ?? null,
             plate: v.plate,
             brand: v.brand,
             model: v.model,

@@ -3,6 +3,7 @@ package com.autolog.backend.service;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -41,7 +42,7 @@ class VehicleServiceTest {
 
         Vehicle vehicle = new Vehicle();
         vehicle.setId(1L);
-        vehicle.setPlate("ABC-123");
+        vehicle.setPlate("ABC123");
         vehicle.setBrand("Kymco");
         vehicle.setModel("Active 110");
         vehicle.setVehicleYear(2023);
@@ -55,7 +56,7 @@ class VehicleServiceTest {
 
         // Assert (Verificar resultados)
         assertNotNull(savedVehicle);
-        assertEquals("ABC-123", savedVehicle.getPlate());
+        assertEquals("ABC123", savedVehicle.getPlate());
         assertEquals("Kymco", savedVehicle.getBrand());
         assertNotNull(savedVehicle.getClient());
         assertEquals(1L, savedVehicle.getClient().getId());
@@ -72,16 +73,16 @@ class VehicleServiceTest {
 
         Vehicle existingVehicle = new Vehicle();
         existingVehicle.setId(12L);
-        existingVehicle.setPlate("ABC-123");
+        existingVehicle.setPlate("ABC123");
         existingVehicle.setChassisNumber("VIN-123");
         existingVehicle.setClient(client);
 
         Vehicle incomingVehicle = new Vehicle();
-        incomingVehicle.setPlate("ABC-123");
+        incomingVehicle.setPlate("ABC123");
         incomingVehicle.setChassisNumber("VIN-123");
         incomingVehicle.setClient(client);
 
-        when(vehicleRepository.findByPlate("ABC-123")).thenReturn(Optional.of(existingVehicle));
+        when(vehicleRepository.findByPlate("ABC123")).thenReturn(Optional.of(existingVehicle));
         when(vehicleRepository.findByChassisNumber("VIN-123")).thenReturn(Optional.of(existingVehicle));
 
         Vehicle result = vehicleService.getOrCreateVehicle(incomingVehicle);
@@ -99,7 +100,7 @@ class VehicleServiceTest {
         Long vehicleId = 1L;
         Vehicle vehicle = new Vehicle();
         vehicle.setId(vehicleId);
-        vehicle.setPlate("XYZ-789");
+        vehicle.setPlate("XYZ789");
 
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle));
 
@@ -108,7 +109,26 @@ class VehicleServiceTest {
 
         // Assert
         assertTrue(foundVehicle.isPresent());
-        assertEquals("XYZ-789", foundVehicle.get().getPlate());
+        assertEquals("XYZ789", foundVehicle.get().getPlate());
         verify(vehicleRepository, times(1)).findById(vehicleId);
+    }
+
+    @Test
+    @DisplayName("Debería aceptar formatos colombianos y rechazar sintaxis inválida")
+    void testColombianPlateSyntax() {
+        assertTrue(VehicleService.isValidColombianPlate("ABC123"));
+        assertTrue(VehicleService.isValidColombianPlate("ABC12D"));
+        assertTrue(VehicleService.isValidColombianPlate("ABC12"));
+        assertTrue(VehicleService.isValidColombianPlate("R12345"));
+        assertTrue(VehicleService.isValidColombianPlate("S12345"));
+        assertTrue(VehicleService.isValidColombianPlate("CD1234"));
+        assertTrue(VehicleService.isValidColombianPlate("CC1234"));
+        assertTrue(VehicleService.isValidColombianPlate("AT1234"));
+        assertTrue(VehicleService.isValidColombianPlate("OI1234"));
+        assertFalse(VehicleService.isValidColombianPlate("abc123"));
+        assertFalse(VehicleService.isValidColombianPlate("ABÑ123"));
+        assertFalse(VehicleService.isValidColombianPlate("ABC-123"));
+        assertFalse(VehicleService.isValidColombianPlate("ABC 123"));
+        assertFalse(VehicleService.isValidColombianPlate("R1234"));
     }
 } 
