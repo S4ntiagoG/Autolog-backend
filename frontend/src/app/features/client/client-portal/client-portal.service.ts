@@ -3,7 +3,12 @@ import { inject, Injectable, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { API_CONFIG } from '../../../core/config/api.config';
-import { ClientVehicleHomeResponse, ServiceHistoryItem, VehicleLookupRequest } from '../../../core/models/api.models';
+import {
+  ClientVehicleHomeResponse,
+  ServiceHistoryItem,
+  ServiceOrderResponse,
+  VehicleLookupRequest
+} from '../../../core/models/api.models';
 
 @Injectable({ providedIn: 'root' })
 export class ClientPortalService {
@@ -22,6 +27,12 @@ export class ClientPortalService {
   getVehicleHistory(vehicleId: number): Observable<ServiceHistoryItem[]> {
     return this.http.get<ServiceHistoryItem[]>(
       `${this.baseUrl}${API_CONFIG.vehicleHistoryPath}/${vehicleId}`
+    );
+  }
+
+  getServiceOrder(orderId: number): Observable<ServiceOrderResponse> {
+    return this.http.get<ServiceOrderResponse>(
+      `${this.baseUrl}${API_CONFIG.serviceOrdersPath}/${orderId}`
     );
   }
 }

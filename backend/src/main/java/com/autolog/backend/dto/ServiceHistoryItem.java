@@ -9,5 +9,6 @@ public record ServiceHistoryItem(
         String primaryReason,
         Integer currentMileage,
         String customerObservations,
-        BigDecimal serviceCost) {
+        BigDecimal serviceCost,
+        String status) {
 }

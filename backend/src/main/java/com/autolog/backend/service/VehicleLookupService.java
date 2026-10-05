@@ -43,7 +43,9 @@ public class VehicleLookupService {
                 .findFirstByVehicleIdOrderByEntryDateDescIdDesc(vehicle.getId())
                 .orElse(null);
         String orderNumber = latestOrder == null ? null : String.format(Locale.ROOT, "ORD-%03d", latestOrder.getId());
-        String status = latestOrder == null ? "SIN ORDEN" : "PENDIENTE";
+        String status = latestOrder == null
+                ? "SIN ORDEN"
+                : latestOrder.getStatus() == null ? "PENDIENTE" : latestOrder.getStatus();
 
         return Optional.of(new ClientVehicleHomeResponse(
                 vehicle.getId(),

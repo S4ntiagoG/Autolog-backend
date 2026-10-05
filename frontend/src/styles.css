@@ -38,3 +38,81 @@ textarea:focus-visible,
   background: #dc2626;
   color: white;
 }
+
+.license-plate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 6.25rem;
+  padding: 0.25rem 0.8rem;
+  border: 2px solid #000;
+  border-radius: 0.35rem;
+  background: linear-gradient(180deg, #ffe019 0%, #f5b700 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.55), inset 0 0 0 1.5px rgba(0, 0, 0, 0.75);
+  color: #000;
+  font-family: "Arial Black", Impact, "Franklin Gothic Heavy", "Trebuchet MS", sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  text-shadow: 0 0.5px 0.5px rgba(255, 255, 255, 0.5);
+  user-select: all;
+  -webkit-text-stroke: 0.75px #000;
+}
+
+@media print {
+  body {
+    min-width: 0;
+    background: #fff;
+    color: #111;
+  }
+
+  .mechanic-layout {
+    display: block !important;
+    min-height: 0 !important;
+    background: #fff !important;
+  }
+
+  .mechanic-sidebar,
+  .work-order-page__content {
+    display: none !important;
+  }
+
+  .work-order-page {
+    min-height: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .invoice-preview-backdrop {
+    position: static !important;
+    display: block !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .invoice-preview {
+    width: 100% !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    padding: 0 !important;
+    color: #111 !important;
+    box-shadow: none !important;
+  }
+
+  .invoice-preview * {
+    border-color: #bbb !important;
+    background-color: transparent !important;
+    color: #111 !important;
+    box-shadow: none !important;
+  }
+
+  .invoice-preview .invoice-actions,
+  .invoice-preview__header > button {
+    display: none !important;
+  }
+}

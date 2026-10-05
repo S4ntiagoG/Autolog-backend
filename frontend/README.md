@@ -65,24 +65,40 @@ La interfaz no expone un único endpoint de intake. En su lugar, el frontend rea
 
 Esta secuencia está implementada en `src/app/features/vehicle-intake/services/vehicle-intake.service.ts`.
 
+### Evidencia fotográfica del ingreso
+
+El formulario acepta hasta cinco imágenes: frontal, lado derecho, trasera, odómetro y evidencia adicional. Solo se aceptan JPG, PNG y WebP, con un límite de 10 MB por imagen. El navegador conserva una vista previa mientras se completa el formulario.
+
+Después de crear la orden, el frontend envía los archivos seleccionados como `multipart/form-data` a `POST /api/service-orders/{id}/evidence`. No se almacenan los bytes en PostgreSQL: el backend escribe cada imagen en `backend/uploads/service-orders/{id}/` con un nombre único, y la orden conserva en sus campos `photoFront`, `photoRightSide`, `photoBack`, `photoOdometer` y `photoExtra` las rutas relativas de los archivos.
+
 ### Portal del cliente
 
 1. El cliente ingresa la placa y el documento.
 2. Angular llama a `POST /api/vehicles/search`.
-3. El backend devuelve el vehículo encontrado y su última orden.
+3. El backend devuelve el vehículo y el estado de su orden más reciente.
 4. Angular consulta `GET /api/service-orders/vehicle/{vehicleId}`.
-5. La pantalla muestra el historial ordenado por fecha, con motivo, fecha, kilometraje, observaciones y total registrado.
+5. La pantalla muestra el historial ordenado por fecha, con motivo, fecha, kilometraje, observaciones, total y estado de cada servicio. El historial se actualiza cada 15 segundos mientras el portal está abierto.
+6. El enlace `Detalles` abre `/client/service-orders/{id}`, donde el cliente puede revisar la evidencia fotográfica, datos del vehículo, tareas, repuestos, mano de obra y resumen de costos. `Descargar factura` abre el diálogo de impresión del navegador, desde donde se puede imprimir o guardar como PDF.
 
-El botón `Detalles` y el nombre del mecánico están reservados para funcionalidades futuras. El botón no abre todavía el detalle de factura.
+El detalle usa el estado guardado en la orden (`PENDIENTE`, `EN PROGRESO` o `LISTO`). Si una orden antigua no tiene imágenes almacenadas, se indica que no se cargó evidencia para ese ingreso.
+
+La vista del detalle incluye navegación de regreso al portal, estado resaltado por color, placa con el estilo compartido de las vistas de vehículos, número de orden legible y tareas presentadas como lista. La acción de factura utiliza la vista de impresión del navegador; esta genera una impresión/PDF del detalle y no crea ni descarga un archivo PDF en el servidor.
+
+### Orden de trabajo mecánico
+
+Desde la vista de vehículos o el tablero mecánico se accede a `service-orders/vehicle/{vehicleId}/work`. Allí se puede actualizar el estado y guardar las tareas con su condición de completadas, repuestos e insumos con cantidades y precio unitario, y mano de obra con horas y tarifa. El diagnóstico, kilometraje y observaciones iniciales son de solo lectura en esta vista; se editan desde el ingreso del vehículo.
+
+El resumen muestra los subtotales de repuestos y mano de obra, calcula los insumos del taller como el 5% de repuestos/insumos y no vuelve a sumar el IVA cuando ya está incluido en los precios.
 
 ## Reglas de negocio importantes
 
 - Un vehículo siempre debe pertenecer a un cliente existente.
 - Una orden de servicio siempre debe estar asociada a un vehículo existente.
 - La fecha de ingreso usa formato ISO: `YYYY-MM-DD`.
-- El backend no gestiona archivos multipart; la aplicación valida y previsualiza imágenes localmente, y solo envía cadenas con nombres de archivo a los campos `photoFront`, `photoRightSide`, `photoBack`, `photoOdometer` y `photoExtra`.
+- Las evidencias fotográficas se envían al backend tras crear la orden; los nombres de archivo se generan en el servidor y las rutas relativas se guardan en la orden.
+- Los archivos locales bajo `backend/uploads/` no se deben borrar mientras la base de datos conserve sus rutas. Incluye esa carpeta en los respaldos y no la publiques en Git.
 - Los catálogos de formularios están centralizados en la capa de frontend porque la API no expone endpoints de catálogo.
-- El formulario de intake no captura precios. Los costos se calcularán después mediante mano de obra e inventario.
+- El formulario de intake no captura precios. Los precios de mano de obra y repuestos/insumos se registran desde la orden de trabajo.
 
 ## Requisitos previos
 
@@ -175,15 +191,17 @@ La aplicación Angular define estas vistas principales en la configuración de r
 | `/mechanic/vehicles` | Acceso alternativo al listado del mecánico |
 | `/client/search` | Consulta de vehículo para el cliente |
 | `/client/home` | Portal del cliente e historial de mantenimientos |
+| `/client/service-orders/:id` | Detalle del servicio para el cliente, evidencia y vista de impresión |
+| `/service-orders/vehicle/:vehicleId/work` | Orden de trabajo mecánico |
 | `**` | Redirige a `/client/search` cuando la ruta no existe |
 
 Estas rutas se configuran en `src/app/app.routes.ts` y la aplicación inicia en la búsqueda del vehículo del portal cliente.
 
 ## Historial y costos
 
-El frontend recibe `serviceCost` como un valor opcional en cada elemento del historial. Si el backend todavía no tiene un total registrado, muestra `Sin costo registrado`.
+El frontend recibe `serviceCost` como un valor opcional en cada elemento del historial. Si el backend todavía no tiene un total registrado, muestra `Sin costo registrado`. El detalle calcula subtotales a partir de repuestos e insumos y mano de obra, agrega insumos del taller al 5% de repuestos/insumos y trata el IVA como incluido en los precios, sin adicionarlo de nuevo.
 
-El costo no se edita desde el intake. La futura lógica de negocio debe sumar la mano de obra correspondiente al motivo de visita y los consumibles o repuestos registrados en inventario.
+El intake no captura precios: los precios se registran en la orden de trabajo.
 
 ## Ejemplo de estructura JSON para crear una orden
 
@@ -193,16 +211,13 @@ El costo no se edita desde el intake. La futura lógica de negocio debe sumar la
   "primaryReason": "Mantenimiento preventivo",
   "currentMileage": 5000,
   "customerObservations": "Revisar frenos y aceite",
-  "photoFront": "frente.jpg",
-  "photoRightSide": "lado-derecho.jpg",
-  "photoBack": "trasera.jpg",
-  "photoOdometer": "odometro.jpg",
-  "photoExtra": "extra.jpg",
   "vehicle": {
     "id": 6
   }
 }
 ```
+
+Las fotos no se envían como nombres en este JSON. Se cargan después, como archivos multipart, usando los campos `photoFront`, `photoRightSide`, `photoBack`, `photoOdometer` y `photoExtra`.
 
 ## Pruebas y validación
 

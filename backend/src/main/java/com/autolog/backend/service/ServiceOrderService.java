@@ -36,7 +36,8 @@ public class ServiceOrderService {
                         order.getPrimaryReason(),
                         order.getCurrentMileage(),
                         order.getCustomerObservations(),
-                        order.getServiceCost()))
+                        order.getServiceCost(),
+                        order.getStatus()))
                 .collect(Collectors.toList());
     }
 

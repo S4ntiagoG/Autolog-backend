@@ -227,34 +227,13 @@
   justify-content: center;
 }
 
-.license-plate {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 6.25rem;
-  padding: 0.25rem 0.8rem;
-  background: linear-gradient(180deg, #ffe019 0%, #f5b700 100%);
-  color: #000000;
-  font-family: "Arial Black", Impact, "Franklin Gothic Heavy", "Trebuchet MS", sans-serif;
-  font-weight: 900;
-  font-size: 0.9375rem;
-  line-height: 1.2;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  border-radius: 0.35rem;
-  border: 2px solid #000000;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.55), inset 0 0 0 1.5px rgba(0, 0, 0, 0.75);
-  -webkit-text-stroke: 0.75px #000000;
-  text-shadow: 0 0.5px 0.5px rgba(255, 255, 255, 0.5);
-  user-select: all;
-}
-
 .vehicle-row__service {
   min-width: 0;
 }
 
 .service-label {
-  display: inline-block;
+  display: block;
+  max-width: 100%;
   color: #eef1f3;
   font-size: 0.92rem;
   font-weight: 600;

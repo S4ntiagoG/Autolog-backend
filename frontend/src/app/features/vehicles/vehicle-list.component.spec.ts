@@ -100,10 +100,25 @@ describe('VehicleListComponent', () => {
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
+  it('opens the mechanic work order for a vehicle with an existing service order', () => {
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+
+    component.openActionModal('SERVICE', MOCK_ITEMS[0]);
+    expect(router.navigate).toHaveBeenCalledWith(['/service-orders', 'vehicle', 1, 'work']);
+  });
+
+  it('opens the mechanic work order for a vehicle without a service order', () => {
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+
+    component.openActionModal('SERVICE', MOCK_ITEMS[2]);
+    expect(router.navigate).toHaveBeenCalledWith(['/service-orders', 'vehicle', 3, 'work']);
+  });
+
   it('updates vehicle status successfully', () => {
     component.updateVehicleStatus(1, 'EN PROGRESO');
     const updated = component.allVehicles().find((v) => v.id === 1);
     expect(updated?.status).toBe('EN PROGRESO');
   });
 });
-

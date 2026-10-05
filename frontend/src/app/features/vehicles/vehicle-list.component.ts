@@ -159,9 +159,15 @@ export class VehicleListComponent implements OnInit {
   }
 
   openActionModal(type: 'EDIT' | 'HISTORY' | 'SERVICE', vehicle: MechanicVehicleItem): void {
-    if (type === 'EDIT') {
+    if (type === 'EDIT' || type === 'SERVICE') {
       if (vehicle.serviceOrderId) {
-        void this.router.navigate(['/service-orders', vehicle.serviceOrderId, 'edit']);
+        if (type === 'EDIT') {
+          void this.router.navigate(['/service-orders', vehicle.serviceOrderId, 'edit']);
+        } else {
+          void this.router.navigate(['/service-orders', 'vehicle', vehicle.id, 'work']);
+        }
+      } else if (type === 'SERVICE') {
+        void this.router.navigate(['/service-orders', 'vehicle', vehicle.id, 'work']);
       }
       return;
     }

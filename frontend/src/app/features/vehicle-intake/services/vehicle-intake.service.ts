@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, switchMap } from 'rxjs';
+import { Observable, of, switchMap } from 'rxjs';
 
 import { API_CONFIG } from '../../../core/config/api.config';
 import {
@@ -14,13 +14,10 @@ import {
   VehicleResponse
 } from '../../../core/models/api.models';
 
-export interface IntakeEvidenceNames {
-  photoFront?: string;
-  photoRightSide?: string;
-  photoBack?: string;
-  photoOdometer?: string;
-  photoExtra?: string;
-}
+export type IntakeEvidenceFiles = Partial<Record<
+  'photoFront' | 'photoRightSide' | 'photoBack' | 'photoOdometer' | 'photoExtra',
+  File
+>>;
 
 @Injectable({ providedIn: 'root' })
 export class VehicleIntakeService {
@@ -43,7 +40,7 @@ export class VehicleIntakeService {
     return this.http.get<ServiceOrderResponse>(`${this.baseUrl}${API_CONFIG.serviceOrdersPath}/${id}`);
   }
 
-  createIntake(draft: VehicleIntakeDraft, evidence: IntakeEvidenceNames): Observable<ServiceOrderResponse> {
+  createIntake(draft: VehicleIntakeDraft, evidence: IntakeEvidenceFiles): Observable<ServiceOrderResponse> {
     const clientRequest: ClientRequest = draft.customer;
     return this.http.post<ClientResponse>(`${this.baseUrl}${API_CONFIG.clientsPath}`, clientRequest).pipe(
       switchMap((client) => {
@@ -57,14 +54,30 @@ export class VehicleIntakeService {
         const serviceOrderRequest: ServiceOrderRequest = {
           entryDate: this.todayAsIsoDate(),
           ...draft.entry,
-          ...evidence,
           vehicle: { id: vehicle.id }
         };
         return this.http.post<ServiceOrderResponse>(
           `${this.baseUrl}${API_CONFIG.serviceOrdersPath}`,
           serviceOrderRequest
-        );
+        ).pipe(switchMap((order) =>
+          Object.keys(evidence).length > 0
+            ? this.uploadEvidence(order.id, evidence)
+            : of(order)
+        ));
       })
+    );
+  }
+
+  private uploadEvidence(orderId: number, evidence: IntakeEvidenceFiles): Observable<ServiceOrderResponse> {
+    const formData = new FormData();
+    for (const [slot, file] of Object.entries(evidence)) {
+      if (file) {
+        formData.append(slot, file, file.name);
+      }
+    }
+    return this.http.post<ServiceOrderResponse>(
+      `${this.baseUrl}${API_CONFIG.serviceOrdersPath}/${orderId}/evidence`,
+      formData
     );
   }
 

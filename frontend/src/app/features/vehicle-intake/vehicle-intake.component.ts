@@ -14,7 +14,7 @@ import {
   VEHICLE_TYPES,
   VISIT_REASONS
 } from './models/vehicle-intake.constants';
-import { IntakeEvidenceNames, VehicleIntakeService } from './services/vehicle-intake.service';
+import { IntakeEvidenceFiles, VehicleIntakeService } from './services/vehicle-intake.service';
 
 interface SelectedImage {
   id: string;
@@ -113,7 +113,7 @@ export class VehicleIntakeComponent implements OnInit, OnDestroy {
     const order = this.editingOrder();
     const saveRequest = vehicle && order
       ? this.intakeService.updateIntake(vehicle, order, draft)
-      : this.intakeService.createIntake(draft, this.evidenceNames());
+      : this.intakeService.createIntake(draft, this.evidenceFiles());
 
     saveRequest.subscribe({
       next: (savedOrder) => {
@@ -281,8 +281,8 @@ export class VehicleIntakeComponent implements OnInit, OnDestroy {
     const availableSlots = MAX_EVIDENCE_IMAGES - currentImages.length;
 
     for (const file of Array.from(files).slice(0, availableSlots)) {
-      if (!file.type.startsWith('image/')) {
-        this.evidenceMessage.set('Solo puedes seleccionar archivos de imagen.');
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        this.evidenceMessage.set('Solo puedes seleccionar imágenes JPG, PNG o WebP.');
         continue;
       }
       if (file.size > MAX_IMAGE_SIZE_BYTES) {
@@ -317,15 +317,22 @@ export class VehicleIntakeComponent implements OnInit, OnDestroy {
     images.forEach((image) => URL.revokeObjectURL(image.previewUrl));
   }
 
-  private evidenceNames(): IntakeEvidenceNames {
-    const names = this.selectedImages().map((image) => image.file.name);
-    return {
-      photoFront: names[0],
-      photoRightSide: names[1],
-      photoBack: names[2],
-      photoOdometer: names[3],
-      photoExtra: names[4]
-    };
+  private evidenceFiles(): IntakeEvidenceFiles {
+    const slots: (keyof IntakeEvidenceFiles)[] = [
+      'photoFront',
+      'photoRightSide',
+      'photoBack',
+      'photoOdometer',
+      'photoExtra'
+    ];
+    const evidence: IntakeEvidenceFiles = {};
+    this.selectedImages().forEach((image, index) => {
+      const slot = slots[index];
+      if (slot) {
+        evidence[slot] = image.file;
+      }
+    });
+    return evidence;
   }
 
   private getFriendlyError(error: unknown): string {

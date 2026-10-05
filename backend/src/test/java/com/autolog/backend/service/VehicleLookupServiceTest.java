@@ -44,6 +44,7 @@ class VehicleLookupServiceTest {
         vehicle.setClient(client);
         ServiceOrder order = new ServiceOrder();
         order.setId(1L);
+        order.setStatus("LISTO");
 
         when(vehicleRepository.findByPlateAndClient_IdentificationNumber("ABC123", "123456"))
                 .thenReturn(Optional.of(vehicle));
@@ -56,7 +57,7 @@ class VehicleLookupServiceTest {
         assertEquals("FZ25", result.model());
         assertEquals("ABC123", result.plate());
         assertEquals("ORD-001", result.orderNumber());
-        assertEquals("PENDIENTE", result.status());
+        assertEquals("LISTO", result.status());
         verify(vehicleRepository).findByPlateAndClient_IdentificationNumber("ABC123", "123456");
     }
 

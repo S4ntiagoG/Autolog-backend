@@ -47,6 +47,7 @@ export interface ServiceHistoryItem {
   currentMileage: number;
   customerObservations: string | null;
   serviceCost: number | null;
+  status: VehicleServiceStatus;
 }
 
 export interface ServiceOrderRequest {
@@ -55,6 +56,11 @@ export interface ServiceOrderRequest {
   currentMileage: number;
   customerObservations: string;
   serviceCost?: number | null;
+  mechanicDiagnosis?: string;
+  status?: VehicleServiceStatus;
+  tasks?: ServiceTaskRequest[];
+  parts?: ServicePartRequest[];
+  labor?: ServiceLaborRequest[];
   photoFront?: string;
   photoRightSide?: string;
   photoBack?: string;
@@ -66,6 +72,26 @@ export interface ServiceOrderRequest {
 export interface ServiceOrderResponse extends ServiceOrderRequest {
   id: number;
   vehicle: VehicleResponse;
+}
+
+export type VehicleServiceStatus = 'PENDIENTE' | 'EN PROGRESO' | 'LISTO';
+
+export interface ServiceTaskRequest {
+  description: string;
+  completed: boolean;
+}
+
+export interface ServicePartRequest {
+  name: string;
+  partNumber: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface ServiceLaborRequest {
+  description: string;
+  hours: number;
+  rate: number;
 }
 
 export interface ServiceOrderUpdateRequest {

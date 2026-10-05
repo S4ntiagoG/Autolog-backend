@@ -1,0 +1,259 @@
+<main class="work-order-page">
+  <div class="work-order-page__content">
+    <header class="work-order-header">
+      <div>
+        <p class="eyebrow">CICLO MOTOR by AUTOLOG · TALLER</p>
+        <p class="order-reference">ORDEN DE SERVICIO #{{ orderNumber() }}</p>
+        <div class="work-order-title">
+          <h1>{{ vehicle()?.brand }} {{ vehicle()?.model }}</h1>
+          <span class="license-plate">{{ vehicle()?.plate }}</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <label class="status-control">
+          <span class="sr-only">Estado de la orden</span>
+          <select [value]="status()" (change)="onStatusChange($event)">
+            <option value="PENDIENTE">PENDIENTE</option>
+            <option value="EN PROGRESO">EN PROGRESO</option>
+            <option value="LISTO">LISTO</option>
+          </select>
+        </label>
+        <a routerLink="/vehicles" class="secondary-button">Volver a vehículos</a>
+      </div>
+    </header>
+
+    @if (loading()) {
+      <div class="message-card" role="status">Cargando datos del vehículo y la orden de servicio…</div>
+    } @else if (error() && !vehicle()) {
+      <div class="message-card message-card--error" role="alert">{{ error() }}</div>
+    } @else if (vehicle()) {
+      @if (error()) {
+        <div class="message-card message-card--error" role="alert">{{ error() }}</div>
+      }
+      @if (success()) {
+        <div class="message-card message-card--success" role="status">{{ success() }}</div>
+      }
+      @if (!order()) {
+        <div class="message-card">
+          Este vehículo todavía no tiene una orden de trabajo. Completa el diagnóstico y guarda para crearla.
+        </div>
+      }
+
+      <div class="work-order-layout">
+        <div class="work-order-main">
+          <section class="work-card diagnosis-card">
+            <h2><span aria-hidden="true">▣</span> Diagnóstico inicial</h2>
+            <p class="diagnosis-description">{{ diagnosis() }}</p>
+            @if (order()) {
+              <a class="mileage-edit-link" [routerLink]="['/service-orders', order()!.id, 'edit']">
+                Editar diagnóstico en el ingreso del vehículo
+              </a>
+            }
+            <div class="vehicle-details">
+              <span>{{ vehicle()?.vehicleYear }} · {{ vehicle()?.client?.name }}</span>
+              <span class="mileage-display">
+                Kilometraje registrado:
+                <strong>{{ mileage() === null ? 'No registrado' : (mileage() | number) + ' km' }}</strong>
+              </span>
+              @if (order()) {
+                <a class="mileage-edit-link" [routerLink]="['/service-orders', order()!.id, 'edit']">
+                  Editar ingreso del vehículo
+                </a>
+              }
+            </div>
+          </section>
+
+          <section class="work-card tasks-card">
+            <div class="section-heading">
+              <h2><span aria-hidden="true">☷</span> Tareas realizadas</h2>
+              <button type="button" class="text-button" (click)="addTask()">+ Agregar tarea</button>
+            </div>
+            @if (tasks().length === 0) {
+              <p class="empty-note">Agrega las tareas que se deben realizar en este vehículo.</p>
+            }
+            <div class="task-list">
+              @for (task of tasks(); track $index) {
+                <div class="task-row">
+                  <input
+                    type="checkbox"
+                    [checked]="task.completed"
+                    (change)="toggleTask($index, $event)"
+                    [attr.aria-label]="'Marcar tarea ' + ($index + 1) + ' como realizada'"
+                  />
+                  <input
+                    type="text"
+                    [value]="task.description"
+                    (input)="updateTaskDescription($index, $event)"
+                    [placeholder]="'Descripción de la tarea ' + ($index + 1)"
+                    [attr.aria-label]="'Descripción de tarea ' + ($index + 1)"
+                  />
+                  <span class="task-check" [class.task-check--done]="task.completed" aria-hidden="true">
+                    {{ task.completed ? '✓' : '○' }}
+                  </span>
+                  <button type="button" class="icon-button" (click)="removeTask($index)" [attr.aria-label]="'Eliminar tarea ' + ($index + 1)">×</button>
+                </div>
+              }
+            </div>
+          </section>
+
+          <section class="work-card table-card">
+            <div class="section-heading">
+              <h2><span aria-hidden="true">◷</span> Repuestos e insumos</h2>
+              <button type="button" class="text-button" (click)="addPart()">+ Agregar repuesto</button>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nombre / referencia</th>
+                    <th>Cant.</th>
+                    <th>Precio unitario</th>
+                    <th>Subtotal</th>
+                    <th><span class="sr-only">Acciones</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (part of parts(); track $index) {
+                    <tr>
+                      <td>
+                        <input [value]="part.name" (input)="updatePart($index, 'name', $event)" [attr.aria-label]="'Nombre del repuesto ' + ($index + 1)" placeholder="Nombre del repuesto" />
+                        <input class="sub-input" [value]="part.partNumber" (input)="updatePart($index, 'partNumber', $event)" [attr.aria-label]="'Referencia del repuesto ' + ($index + 1)" placeholder="Referencia (opcional)" />
+                      </td>
+                      <td><input class="numeric-input" type="number" min="1" step="1" [value]="part.quantity" (input)="updatePart($index, 'quantity', $event)" [attr.aria-label]="'Cantidad del repuesto ' + ($index + 1)" /></td>
+                      <td><input class="numeric-input" type="number" min="0" step="100" [value]="part.unitPrice" (input)="updatePart($index, 'unitPrice', $event)" [attr.aria-label]="'Precio unitario del repuesto ' + ($index + 1)" /></td>
+                      <td class="money-cell">{{ formatCurrency(part.quantity * part.unitPrice) }}</td>
+                      <td><button type="button" class="icon-button" (click)="removePart($index)" [attr.aria-label]="'Eliminar repuesto ' + ($index + 1)">×</button></td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="5" class="empty-cell">No hay repuestos o insumos agregados.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="work-card table-card">
+            <div class="section-heading">
+              <h2><span aria-hidden="true">◷</span> Mano de obra</h2>
+              <button type="button" class="text-button" (click)="addLabor()">+ Agregar mano de obra</button>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Descripción</th>
+                    <th>Horas</th>
+                    <th>Tarifa por hora</th>
+                    <th>Costo</th>
+                    <th><span class="sr-only">Acciones</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of labor(); track $index) {
+                    <tr>
+                      <td><input [value]="item.description" (input)="updateLabor($index, 'description', $event)" [attr.aria-label]="'Descripción de mano de obra ' + ($index + 1)" placeholder="Descripción del trabajo" /></td>
+                      <td><input class="numeric-input" type="number" min="0.01" step="0.25" [value]="item.hours" (input)="updateLabor($index, 'hours', $event)" [attr.aria-label]="'Horas de mano de obra ' + ($index + 1)" /></td>
+                      <td><input class="numeric-input" type="number" min="0" step="1000" [value]="item.rate" (input)="updateLabor($index, 'rate', $event)" [attr.aria-label]="'Tarifa de mano de obra ' + ($index + 1)" /></td>
+                      <td class="money-cell">{{ formatCurrency(item.hours * item.rate) }}</td>
+                      <td><button type="button" class="icon-button" (click)="removeLabor($index)" [attr.aria-label]="'Eliminar mano de obra ' + ($index + 1)">×</button></td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="5" class="empty-cell">No hay mano de obra agregada.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <aside class="work-card cost-card">
+          <h2>Resumen de costos</h2>
+          <dl class="cost-lines">
+            <div><dt>Repuestos e insumos</dt><dd>{{ formatCurrency(partsSubtotal()) }}</dd></div>
+            <div><dt>Mano de obra</dt><dd>{{ formatCurrency(laborSubtotal()) }}</dd></div>
+            <div><dt>Insumos del taller (5%)</dt><dd>{{ formatCurrency(shopSupplies()) }}</dd></div>
+          </dl>
+          <div class="parts-share">
+            Los repuestos e insumos representan <strong>{{ partsShare() | number:'1.0-2' }}%</strong> del total.
+          </div>
+          <div class="invoice-tax-note">IVA incluido en el precio de repuestos e insumos. No se suma nuevamente.</div>
+          <div class="total-line"><span>Total</span><strong>{{ formatCurrency(total()) }}</strong></div>
+          <button type="button" class="primary-button" (click)="save()" [disabled]="saving()">
+            {{ saving() ? 'Guardando…' : 'Guardar estado y cambios' }}
+          </button>
+          <button type="button" class="invoice-button" (click)="printInvoice()" [disabled]="!order()">
+            Ver factura
+          </button>
+          @if (!order()) {
+            <p class="invoice-hint">Guarda la orden antes de generar la factura.</p>
+          }
+        </aside>
+      </div>
+    }
+  </div>
+
+  @if (showInvoice() && order() && vehicle()) {
+    <div class="invoice-preview-backdrop" role="presentation" (click)="closeInvoice()">
+      <section
+        class="invoice-preview"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="invoice-title"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="invoice-preview__header">
+          <div>
+            <p class="eyebrow">CICLO MOTOR by AUTOLOG</p>
+            <h2 id="invoice-title">Factura / resumen de servicio</h2>
+            <p>Orden #{{ orderNumber() }} · {{ order()?.entryDate | date:'dd/MM/yyyy' }}</p>
+          </div>
+          <button type="button" class="icon-button" (click)="closeInvoice()" aria-label="Cerrar factura">×</button>
+        </header>
+        <div class="invoice-parties">
+          <div><span>Cliente</span><strong>{{ vehicle()?.client?.name }}</strong></div>
+          <div><span>Vehículo</span><strong>{{ vehicle()?.brand }} {{ vehicle()?.model }} · {{ vehicle()?.plate }}</strong></div>
+          <div><span>Estado</span><strong>{{ status() }}</strong></div>
+        </div>
+        <section class="invoice-section">
+          <h3>Diagnóstico</h3>
+          <p>{{ diagnosis() }}</p>
+        </section>
+        @if (tasks().length > 0) {
+          <section class="invoice-section">
+            <h3>Tareas</h3>
+            <ul>
+              @for (task of tasks(); track $index) {
+                <li>{{ task.completed ? '✓' : '○' }} {{ task.description }}</li>
+              }
+            </ul>
+          </section>
+        }
+        <section class="invoice-section">
+          <h3>Detalle de cobros</h3>
+          <table class="invoice-table">
+            <tbody>
+              @for (part of parts(); track $index) {
+                <tr><td>{{ part.name }} <small>{{ part.partNumber }}</small></td><td>{{ part.quantity }} × {{ formatCurrency(part.unitPrice) }}</td><td>{{ formatCurrency(part.quantity * part.unitPrice) }}</td></tr>
+              }
+              @for (item of labor(); track $index) {
+                <tr><td>{{ item.description }}</td><td>{{ item.hours }} h × {{ formatCurrency(item.rate) }}</td><td>{{ formatCurrency(item.hours * item.rate) }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </section>
+        <dl class="invoice-totals">
+          <div><dt>Repuestos e insumos</dt><dd>{{ formatCurrency(partsSubtotal()) }}</dd></div>
+          <div><dt>Mano de obra</dt><dd>{{ formatCurrency(laborSubtotal()) }}</dd></div>
+          <div><dt>Insumos del taller (5%)</dt><dd>{{ formatCurrency(shopSupplies()) }}</dd></div>
+          <div><dt>Porcentaje de la factura en repuestos e insumos</dt><dd>{{ partsShare() | number:'1.0-2' }}%</dd></div>
+          <div class="invoice-grand-total"><dt>Total</dt><dd>{{ formatCurrency(total()) }}</dd></div>
+        </dl>
+        <p class="invoice-iva-note">El IVA está incluido en los precios de repuestos e insumos y no se adiciona por separado.</p>
+        <footer class="invoice-actions">
+          <button type="button" class="secondary-button" (click)="closeInvoice()">Cerrar</button>
+          <button type="button" class="primary-button" (click)="printInvoiceDocument()">Imprimir factura</button>
+        </footer>
+      </section>
+    </div>
+  }
+</main>

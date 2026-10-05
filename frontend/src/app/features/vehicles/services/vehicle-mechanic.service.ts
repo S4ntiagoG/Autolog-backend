@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { catchError, forkJoin, map, Observable, of } from 'rxjs';
 
 import { API_CONFIG } from '../../../core/config/api.config';
-import { ServiceOrderResponse, VehicleResponse } from '../../../core/models/api.models';
+import { ServiceOrderRequest, ServiceOrderResponse, VehicleResponse } from '../../../core/models/api.models';
 import { MechanicVehicleItem, VehicleStatus } from '../models/vehicle-mechanic.models';
 
 @Injectable({ providedIn: 'root' })
@@ -23,7 +23,7 @@ export class VehicleMechanicService {
           return [];
         }
 
-        return vehicles.map((v, index): MechanicVehicleItem => {
+        return vehicles.map((v): MechanicVehicleItem => {
           // Buscar última orden de servicio para este vehículo en la base de datos
           const vehicleOrders = (orders || []).filter((o) => o.vehicle?.id === v.id);
           const latestOrder = vehicleOrders.sort((a, b) =>
@@ -39,8 +39,7 @@ export class VehicleMechanicService {
           }
 
           // Si el vehículo tiene orden de servicio, asigna estado según antigüedad o estado activo
-          const statuses: VehicleStatus[] = ['LISTO', 'EN PROGRESO', 'PENDIENTE'];
-          const status = latestOrder ? statuses[index % statuses.length] : 'PENDIENTE';
+          const status: VehicleStatus = latestOrder?.status ?? 'PENDIENTE';
 
           return {
             id: v.id,
@@ -60,5 +59,20 @@ export class VehicleMechanicService {
 
   deleteVehicle(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}${API_CONFIG.vehiclesPath}/${id}`);
+  }
+
+  getVehicle(id: number): Observable<VehicleResponse> {
+    return this.http.get<VehicleResponse>(`${this.baseUrl}${API_CONFIG.vehiclesPath}/${id}`);
+  }
+
+  getServiceOrders(): Observable<ServiceOrderResponse[]> {
+    return this.http.get<ServiceOrderResponse[]>(`${this.baseUrl}${API_CONFIG.serviceOrdersPath}`);
+  }
+
+  saveServiceOrder(orderId: number | null, request: ServiceOrderRequest): Observable<ServiceOrderResponse> {
+    const url = `${this.baseUrl}${API_CONFIG.serviceOrdersPath}`;
+    return orderId === null
+      ? this.http.post<ServiceOrderResponse>(url, request)
+      : this.http.put<ServiceOrderResponse>(`${url}/${orderId}`, request);
   }
 }

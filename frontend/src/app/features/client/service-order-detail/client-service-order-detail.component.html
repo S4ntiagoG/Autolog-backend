@@ -1,0 +1,165 @@
+<main class="client-detail-page">
+  <header class="client-detail-header">
+    <div class="brand-lockup">
+      <a routerLink="/client/home" aria-label="Volver al home">
+        <img class="brand-mark" src="/ciclo-motor-la-villa.jpeg" alt="Ciclo Motor La Villa" />
+      </a>
+      <div class="brand-caption">
+        <span>POWER BY</span>
+        <strong>AUTOLOG</strong>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/client/home" class="home-button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <path d="m15 18-6-6 6-6"></path>
+          <path d="M9 12h12"></path>
+        </svg>
+        VOLVER AL HOME
+      </a>
+    </div>
+  </header>
+
+  <div class="client-detail-content">
+    @if (loading()) {
+      <p class="message-card" role="status">Cargando el detalle del servicio…</p>
+    } @else if (error()) {
+      <p class="message-card message-card--error" role="alert">{{ error() }}</p>
+    } @else if (order(); as serviceOrder) {
+      <section class="order-heading">
+        <div>
+          <p class="order-kicker">Orden de servicio #{{ orderNumber(serviceOrder.id) }}</p>
+          <h1>{{ serviceOrder.vehicle.brand }} {{ serviceOrder.vehicle.model }}</h1>
+          <p class="order-date">Servicio registrado el {{ formatServiceDate(serviceOrder.entryDate) }}</p>
+        </div>
+        <div class="order-heading-actions">
+          <button type="button" class="home-button download-button" (click)="downloadInvoice()">
+            <img src="/icons/donwload.png" alt="" aria-hidden="true" />
+            DESCARGAR FACTURA
+          </button>
+          <span class="status-pill" [ngClass]="statusClass(serviceOrder.status)">{{ serviceOrder.status || 'PENDIENTE' }}</span>
+        </div>
+      </section>
+
+      <div class="detail-grid">
+        <aside class="vehicle-card">
+          <h2><span aria-hidden="true">▣</span> Detalles del vehículo</h2>
+          @if (selectedImageUrl(); as imageUrl) {
+            <img class="vehicle-photo" [src]="imageUrl" [alt]="'Evidencia del vehículo ' + serviceOrder.vehicle.plate" />
+          } @else {
+            <div class="photo-placeholder">
+              <span aria-hidden="true">▧</span>
+              <p>No se cargaron fotos de evidencia para este ingreso.</p>
+            </div>
+          }
+
+          @if (evidenceImages().length > 1) {
+            <div class="evidence-gallery" aria-label="Fotos del ingreso al taller">
+              @for (image of evidenceImages(); track image.slot) {
+                <button
+                  type="button"
+                  [class.evidence-thumbnail--active]="selectedEvidence() === image.slot"
+                  (click)="selectEvidence(image.slot)"
+                  [attr.aria-label]="'Ver foto: ' + image.label"
+                  [attr.aria-pressed]="selectedEvidence() === image.slot"
+                >
+                  <img [src]="evidenceUrl(serviceOrder.id, image.slot)" [alt]="image.label" />
+                </button>
+              }
+            </div>
+          }
+
+          <span class="license-plate vehicle-plate">{{ serviceOrder.vehicle.plate }}</span>
+          <dl class="vehicle-facts">
+            <div>
+              <dt>Marca / modelo</dt>
+              <dd>{{ serviceOrder.vehicle.vehicleYear }} {{ serviceOrder.vehicle.brand }} {{ serviceOrder.vehicle.model }}</dd>
+            </div>
+            <div>
+              <dt>Kilometraje</dt>
+              <dd>{{ serviceOrder.currentMileage | number }} km</dd>
+            </div>
+            <div>
+              <dt>VIN</dt>
+              <dd>{{ serviceOrder.vehicle.chassisNumber || 'No registrado' }}</dd>
+            </div>
+          </dl>
+        </aside>
+
+        <div class="service-detail-main">
+          <section class="detail-card service-summary">
+            <h2><span aria-hidden="true">⚒</span> Resumen del servicio</h2>
+            <p class="summary-diagnosis">{{ serviceOrder.mechanicDiagnosis || serviceOrder.primaryReason }}</p>
+            @if (serviceOrder.customerObservations) {
+              <p class="customer-observations">{{ serviceOrder.customerObservations }}</p>
+            }
+
+            @if ((serviceOrder.tasks ?? []).length > 0) {
+              <h3>Tareas realizadas</h3>
+              <ul class="task-list">
+                @for (task of serviceOrder.tasks ?? []; track $index) {
+                  <li>
+                    {{ task.description }}
+                  </li>
+                }
+              </ul>
+            }
+
+            <h3>Repuestos e insumos utilizados</h3>
+            <div class="detail-table-wrap">
+              <table class="detail-table">
+                <thead><tr><th>Artículo</th><th>Cantidad</th><th>Subtotal</th></tr></thead>
+                <tbody>
+                  @for (part of serviceOrder.parts ?? []; track $index) {
+                    <tr>
+                      <td>{{ part.name }} @if (part.partNumber) { <small>Ref. {{ part.partNumber }}</small> }</td>
+                      <td>{{ part.quantity }}</td>
+                      <td>{{ formatCurrency(part.quantity * part.unitPrice) }}</td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="3" class="empty-row">No se registraron repuestos ni insumos.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <h3>Mano de obra</h3>
+            <div class="detail-table-wrap">
+              <table class="detail-table">
+                <thead><tr><th>Descripción</th><th>Horas</th><th>Costo</th></tr></thead>
+                <tbody>
+                  @for (labor of serviceOrder.labor ?? []; track $index) {
+                    <tr>
+                      <td>{{ labor.description }}</td>
+                      <td>{{ labor.hours | number:'1.0-2' }}</td>
+                      <td>{{ formatCurrency(labor.hours * labor.rate) }}</td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="3" class="empty-row">No se registró mano de obra.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="detail-card payment-summary">
+            <dl class="cost-breakdown">
+              <div><dt>Mano de obra</dt><dd>{{ formatCurrency(laborSubtotal()) }}</dd></div>
+              <div><dt>Repuestos e insumos</dt><dd>{{ formatCurrency(partsSubtotal()) }}</dd></div>
+              <div><dt>Insumos del taller (5%)</dt><dd>{{ formatCurrency(shopSupplies()) }}</dd></div>
+              <div class="parts-share-line">
+                <dt>Participación de repuestos e insumos</dt>
+                <dd>{{ partsShare() | number:'1.0-2' }}%</dd>
+              </div>
+            </dl>
+            <div class="paid-total">
+              <span>Total del servicio</span>
+              <strong>{{ formatCurrency(totalPaid()) }}</strong>
+              <small>IVA incluido en el precio de repuestos e insumos; no se cobra nuevamente.</small>
+            </div>
+          </section>
+        </div>
+      </div>
+    }
+  </div>
+</main>
