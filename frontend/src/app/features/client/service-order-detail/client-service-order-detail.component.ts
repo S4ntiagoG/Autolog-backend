@@ -59,16 +59,11 @@ export class ClientServiceOrderDetailComponent implements OnInit {
   readonly laborSubtotal = computed(() => this.roundCurrency(
     (this.order()?.labor ?? []).reduce((total, labor) => total + labor.hours * labor.rate, 0)
   ));
-  readonly shopSupplies = computed(() => this.roundCurrency(this.partsSubtotal() * 0.05));
   readonly calculatedTotal = computed(() => this.roundCurrency(
-    this.partsSubtotal() + this.laborSubtotal() + this.shopSupplies()
+    this.partsSubtotal() + this.laborSubtotal()
   ));
-  readonly totalPaid = computed(() => {
-    const serviceCost = this.order()?.serviceCost;
-    return serviceCost !== null && serviceCost !== undefined
-      ? Number(serviceCost)
-      : this.calculatedTotal();
-  });
+  readonly includedVat = computed(() => this.roundCurrency(this.calculatedTotal() * 19 / 119));
+  readonly totalPaid = computed(() => this.calculatedTotal());
   readonly partsShare = computed(() =>
     this.totalPaid() === 0 ? 0 : this.roundCurrency((this.partsSubtotal() / this.totalPaid()) * 100)
   );

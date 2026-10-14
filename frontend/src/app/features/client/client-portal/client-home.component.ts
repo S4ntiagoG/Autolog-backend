@@ -1,14 +1,24 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { catchError, of, switchMap, timer } from 'rxjs';
+import { catchError, map, of, switchMap, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { ClientVehicleHomeResponse, ServiceHistoryItem } from '../../../core/models/api.models';
+import {
+  ClientVehicleHomeResponse,
+  ServiceHistoryItem,
+  ServiceOrderResponse
+} from '../../../core/models/api.models';
 import { ClientPortalService } from './client-portal.service';
 
 type ClientTab = 'HISTORY' | 'TRACKING';
 type TimelineState = 'complete' | 'active' | 'pending';
+
+interface LatestOrderSnapshot {
+  history: ServiceHistoryItem[];
+  order: ServiceOrderResponse | null;
+  costBreakdownError: string;
+}
 
 interface TimelineStep {
   label: string;
@@ -32,7 +42,29 @@ export class ClientHomeComponent implements OnInit {
   readonly historyItems = signal<ServiceHistoryItem[]>([]);
   readonly historyLoading = signal(false);
   readonly historyError = signal('');
+  readonly latestOrderDetails = signal<ServiceOrderResponse | null>(null);
+  readonly costBreakdownError = signal('');
   readonly latestOrder = computed(() => this.historyItems()[0] ?? null);
+  readonly partsSubtotal = computed(() => this.roundCurrency(
+    (this.latestOrderDetails()?.parts ?? []).reduce((total, part) => total + part.quantity * part.unitPrice, 0)
+  ));
+  readonly laborSubtotal = computed(() => this.roundCurrency(
+    (this.latestOrderDetails()?.labor ?? []).reduce((total, labor) => total + labor.hours * labor.rate, 0)
+  ));
+  readonly costBreakdownTotal = computed(() =>
+    this.roundCurrency(this.partsSubtotal() + this.laborSubtotal())
+  );
+  readonly includedVat = computed(() =>
+    this.roundCurrency(this.costBreakdownTotal() * 19 / 119)
+  );
+  readonly hasCostBreakdown = computed(() =>
+    Boolean(this.latestOrderDetails()?.parts?.length || this.latestOrderDetails()?.labor?.length)
+  );
+  readonly laborDescriptions = computed(() =>
+    (this.latestOrderDetails()?.labor ?? [])
+      .map((labor) => labor.description.trim())
+      .filter(Boolean)
+  );
   readonly timelineSteps: TimelineStep[] = [
     { label: 'Ingresado al taller', description: 'Recepción y registro inicial.' },
     { label: 'En diagnóstico', description: 'El taller revisa el vehículo.' },
@@ -72,6 +104,10 @@ export class ClientHomeComponent implements OnInit {
       currency: 'COP',
       maximumFractionDigits: 0
     }).format(cost);
+  }
+
+  downloadQuote(): void {
+    window.print();
   }
 
   statusClass(status: string | null | undefined): string {
@@ -142,20 +178,46 @@ export class ClientHomeComponent implements OnInit {
           return of(null);
         })
       )),
+      switchMap((history) => {
+        if (history === null) {
+          return of(null);
+        }
+        const latestOrder = history[0];
+        if (!latestOrder) {
+          return of({ history, order: null, costBreakdownError: '' });
+        }
+        return this.portal.getServiceOrder(latestOrder.serviceOrderId).pipe(
+          map((order) => ({ history, order, costBreakdownError: '' })),
+          catchError((error: unknown) => {
+            console.error('Error cargando el desglose de costos:', error);
+            return of({
+              history,
+              order: null,
+              costBreakdownError: 'No fue posible cargar el desglose de costos.'
+            });
+          })
+        );
+      }),
       takeUntilDestroyed(this.destroyRef)
-    ).subscribe((history) => {
-      if (history) {
-        this.historyItems.set(history);
+    ).subscribe((snapshot) => {
+      if (snapshot) {
+        this.historyItems.set(snapshot.history);
+        this.latestOrderDetails.set(snapshot.order);
+        this.costBreakdownError.set(snapshot.costBreakdownError);
         const currentVehicle = this.vehicle();
         if (currentVehicle) {
           this.portal.vehicle.set({
             ...currentVehicle,
-            status: history[0]?.status ?? (history.length ? 'PENDIENTE' : 'SIN ORDEN')
+            status: snapshot.history[0]?.status ?? (snapshot.history.length ? 'PENDIENTE' : 'SIN ORDEN')
           });
         }
         this.historyError.set('');
       }
       this.historyLoading.set(false);
     });
+  }
+
+  private roundCurrency(value: number): number {
+    return Math.round((value + Number.EPSILON) * 100) / 100;
   }
 }

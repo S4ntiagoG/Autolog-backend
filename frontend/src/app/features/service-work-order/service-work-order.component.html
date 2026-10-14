@@ -203,12 +203,12 @@
           <dl class="cost-lines">
             <div><dt>Repuestos e insumos</dt><dd>{{ formatCurrency(partsSubtotal()) }}</dd></div>
             <div><dt>Mano de obra</dt><dd>{{ formatCurrency(laborSubtotal()) }}</dd></div>
-            <div><dt>Insumos del taller (5%)</dt><dd>{{ formatCurrency(shopSupplies()) }}</dd></div>
+            <div><dt>IVA incluido (19%)</dt><dd>{{ formatCurrency(includedVat()) }}</dd></div>
           </dl>
           <div class="parts-share">
             Los repuestos e insumos representan <strong>{{ partsShare() | number:'1.0-2' }}%</strong> del total.
           </div>
-          <div class="invoice-tax-note">IVA incluido en el precio de repuestos e insumos. No se suma nuevamente.</div>
+          <div class="invoice-tax-note">El IVA (19%) ya está incluido en los precios ingresados y no se suma al total.</div>
           <div class="total-line"><span>Total</span><strong>{{ formatCurrency(total()) }}</strong></div>
           <button type="button" class="primary-button" (click)="save()" [disabled]="saving()">
             {{ saving() ? 'Guardando…' : 'Guardar estado y cambios' }}
@@ -276,11 +276,11 @@
         <dl class="invoice-totals">
           <div><dt>Repuestos e insumos</dt><dd>{{ formatCurrency(partsSubtotal()) }}</dd></div>
           <div><dt>Mano de obra</dt><dd>{{ formatCurrency(laborSubtotal()) }}</dd></div>
-          <div><dt>Insumos del taller (5%)</dt><dd>{{ formatCurrency(shopSupplies()) }}</dd></div>
+          <div><dt>IVA incluido (19%)</dt><dd>{{ formatCurrency(includedVat()) }}</dd></div>
           <div><dt>Porcentaje de la factura en repuestos e insumos</dt><dd>{{ partsShare() | number:'1.0-2' }}%</dd></div>
           <div class="invoice-grand-total"><dt>Total</dt><dd>{{ formatCurrency(total()) }}</dd></div>
         </dl>
-        <p class="invoice-iva-note">El IVA está incluido en los precios de repuestos e insumos y no se adiciona por separado.</p>
+        <p class="invoice-iva-note">El IVA (19%) está incluido en los precios ingresados. El valor mostrado ya está dentro del total y no se adiciona por separado.</p>
         <footer class="invoice-actions">
           <button type="button" class="secondary-button" (click)="closeInvoice()">Cerrar</button>
           <button type="button" class="primary-button" (click)="printInvoiceDocument()">Imprimir factura</button>

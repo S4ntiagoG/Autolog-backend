@@ -146,7 +146,7 @@
             <dl class="cost-breakdown">
               <div><dt>Mano de obra</dt><dd>{{ formatCurrency(laborSubtotal()) }}</dd></div>
               <div><dt>Repuestos e insumos</dt><dd>{{ formatCurrency(partsSubtotal()) }}</dd></div>
-              <div><dt>Insumos del taller (5%)</dt><dd>{{ formatCurrency(shopSupplies()) }}</dd></div>
+              <div><dt>IVA incluido (19%)</dt><dd>{{ formatCurrency(includedVat()) }}</dd></div>
               <div class="parts-share-line">
                 <dt>Participación de repuestos e insumos</dt>
                 <dd>{{ partsShare() | number:'1.0-2' }}%</dd>
@@ -155,7 +155,7 @@
             <div class="paid-total">
               <span>Total del servicio</span>
               <strong>{{ formatCurrency(totalPaid()) }}</strong>
-              <small>IVA incluido en el precio de repuestos e insumos; no se cobra nuevamente.</small>
+              <small>El IVA (19%) ya está incluido en los precios ingresados y no se suma nuevamente.</small>
             </div>
           </section>
         </div>

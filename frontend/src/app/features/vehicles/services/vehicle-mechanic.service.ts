@@ -27,7 +27,7 @@ export class VehicleMechanicService {
           // Buscar última orden de servicio para este vehículo en la base de datos
           const vehicleOrders = (orders || []).filter((o) => o.vehicle?.id === v.id);
           const latestOrder = vehicleOrders.sort((a, b) =>
-            new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime()
+            b.entryDate.localeCompare(a.entryDate) || b.id - a.id
           )[0];
 
           let lastServiceDate = '-- / -- / ----';

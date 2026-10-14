@@ -53,9 +53,11 @@ export class ServiceWorkOrderComponent implements OnInit {
   readonly laborSubtotal = computed(() =>
     this.roundCurrency(this.labor().reduce((sum, item) => sum + item.hours * item.rate, 0))
   );
-  readonly shopSupplies = computed(() => this.roundCurrency(this.partsSubtotal() * 0.05));
   readonly total = computed(() =>
-    this.roundCurrency(this.partsSubtotal() + this.laborSubtotal() + this.shopSupplies())
+    this.roundCurrency(this.partsSubtotal() + this.laborSubtotal())
+  );
+  readonly includedVat = computed(() =>
+    this.roundCurrency(this.total() * 19 / 119)
   );
   readonly partsShare = computed(() =>
     this.total() === 0 ? 0 : this.roundCurrency((this.partsSubtotal() / this.total()) * 100)

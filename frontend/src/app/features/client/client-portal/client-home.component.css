@@ -250,6 +250,130 @@
   text-transform: none;
 }
 
+.tracking-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.95fr);
+  align-items: start;
+  gap: 1.5rem;
+}
+
+.tracking-main {
+  min-width: 0;
+}
+
+.cost-breakdown-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #34343a;
+  border-radius: 0.25rem;
+  background: #19191b;
+}
+
+.cost-breakdown-heading {
+  padding: 1rem 1rem 0.75rem;
+}
+
+.cost-breakdown-heading h3 {
+  margin: 0;
+  color: #e4e4e7;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.quote-download {
+  display: inline-flex;
+  width: calc(100% - 2rem);
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid #34343a;
+  border-radius: 0.2rem;
+  background: transparent;
+  padding: 0.5rem 0.75rem;
+  color: #d4d4d8;
+  font-size: 0.7rem;
+  cursor: pointer;
+  margin: 0 1rem 1rem;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+
+.quote-download:hover {
+  border-color: #71717a;
+  color: #fff;
+}
+
+.quote-download:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+
+.quote-download svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
+
+.cost-breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #d4d4d8;
+  font-size: 0.7rem;
+}
+
+.cost-breakdown-table th,
+.cost-breakdown-table td {
+  padding: 0.7rem 1rem;
+  text-align: left;
+}
+
+.cost-breakdown-table thead {
+  border-top: 1px solid #2b2b30;
+  border-bottom: 1px solid #2b2b30;
+  color: #a1a1aa;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+}
+
+.cost-breakdown-table thead th:last-child,
+.cost-breakdown-table tbody td:last-child,
+.cost-breakdown-table tfoot td {
+  text-align: right;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: nowrap;
+}
+
+.cost-breakdown-table tbody tr + tr {
+  border-top: 1px solid #2b2b30;
+}
+
+.cost-breakdown-table tbody small {
+  display: block;
+  margin-top: 0.2rem;
+  color: #a1a1aa;
+  font-size: 0.62rem;
+}
+
+.cost-breakdown-table tfoot {
+  border-top: 1px solid #3f3f46;
+  color: #f4f4f5;
+  font-size: 0.75rem;
+}
+
+.cost-breakdown-message {
+  margin: 0;
+  border-top: 1px solid #2b2b30;
+  padding: 0.85rem 1rem;
+  color: #a1a1aa;
+  font-size: 0.7rem;
+}
+
+@media (max-width: 760px) {
+  .tracking-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 480px) {
   .history-item {
     align-items: flex-start;
@@ -257,5 +381,48 @@
 
   .history-actions {
     text-align: right;
+  }
+}
+
+@media print {
+  :host * {
+    visibility: hidden;
+  }
+
+  .cost-breakdown-card,
+  .cost-breakdown-card * {
+    visibility: visible;
+  }
+
+  .cost-breakdown-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    border: 1px solid #d4d4d8;
+    border-radius: 0;
+    background: #fff;
+    color: #111;
+    box-shadow: none;
+  }
+
+  .cost-breakdown-heading {
+    padding: 1rem;
+  }
+
+  .cost-breakdown-heading h3,
+  .cost-breakdown-table,
+  .cost-breakdown-table tfoot {
+    color: #111;
+  }
+
+  .cost-breakdown-table thead,
+  .cost-breakdown-table tbody small,
+  .cost-breakdown-message {
+    color: #52525b;
+  }
+
+  .quote-download {
+    display: none;
   }
 }

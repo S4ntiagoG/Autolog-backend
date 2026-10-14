@@ -1,5 +1,6 @@
 package com.autolog.backend.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,6 +21,8 @@ import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.autolog.backend.model.ServiceOrder;
+import com.autolog.backend.model.ServiceLabor;
+import com.autolog.backend.model.ServicePart;
 import com.autolog.backend.model.ServiceTask;
 import com.autolog.backend.model.Vehicle;
 import com.autolog.backend.repository.ServiceOrderRepository;
@@ -47,6 +50,14 @@ class ServiceOrderServiceTest {
         order.setPrimaryReason("Mantenimiento preventivo de 5,000 km");
         order.setCurrentMileage(4950);
         order.setVehicle(vehicle);
+        ServicePart part = new ServicePart();
+        part.setQuantity(2);
+        part.setUnitPrice(new BigDecimal("15000.00"));
+        order.setParts(List.of(part));
+        ServiceLabor labor = new ServiceLabor();
+        labor.setHours(new BigDecimal("2.00"));
+        labor.setRate(new BigDecimal("25000.00"));
+        order.setLabor(List.of(labor));
 
         when(serviceOrderRepository.save(any(ServiceOrder.class))).thenReturn(order);
 
@@ -57,6 +68,7 @@ class ServiceOrderServiceTest {
         assertNotNull(savedOrder);
         assertEquals("Mantenimiento preventivo de 5,000 km", savedOrder.getPrimaryReason());
         assertEquals(4950, savedOrder.getCurrentMileage());
+        assertEquals(new BigDecimal("80000.00"), savedOrder.getServiceCost());
         assertNotNull(savedOrder.getVehicle());
         
         verify(serviceOrderRepository, times(1)).save(order);
@@ -70,6 +82,15 @@ class ServiceOrderServiceTest {
         ServiceOrder order = new ServiceOrder();
         order.setId(orderId);
         order.setPrimaryReason("Cambio de pastillas de freno");
+        order.setServiceCost(new BigDecimal("31.50"));
+        ServicePart part = new ServicePart();
+        part.setQuantity(1);
+        part.setUnitPrice(new BigDecimal("10.00"));
+        order.setParts(List.of(part));
+        ServiceLabor labor = new ServiceLabor();
+        labor.setHours(new BigDecimal("2.00"));
+        labor.setRate(new BigDecimal("10.00"));
+        order.setLabor(List.of(labor));
 
         when(serviceOrderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
@@ -79,6 +100,7 @@ class ServiceOrderServiceTest {
         // Assert
         assertTrue(foundOrder.isPresent());
         assertEquals("Cambio de pastillas de freno", foundOrder.get().getPrimaryReason());
+        assertEquals(new BigDecimal("30.00"), foundOrder.get().getServiceCost());
         verify(serviceOrderRepository, times(1)).findById(orderId);
     }
 
@@ -92,8 +114,17 @@ class ServiceOrderServiceTest {
         order.setPrimaryReason("Reparación");
         order.setCurrentMileage(12000);
         order.setStatus("EN PROGRESO");
+        order.setServiceCost(new BigDecimal("31.50"));
         order.setEstimatedPickupAt(estimatedPickupAt);
         order.setProgressNote("Esperando repuestos");
+        ServicePart part = new ServicePart();
+        part.setQuantity(1);
+        part.setUnitPrice(new BigDecimal("10.00"));
+        order.setParts(List.of(part));
+        ServiceLabor labor = new ServiceLabor();
+        labor.setHours(new BigDecimal("2.00"));
+        labor.setRate(new BigDecimal("10.00"));
+        order.setLabor(List.of(labor));
         ServiceTask firstTask = new ServiceTask();
         firstTask.setDescription("Revisar frenos");
         firstTask.setCompleted(true);
@@ -112,5 +143,6 @@ class ServiceOrderServiceTest {
                 history.get(0).tasks().stream().map(ServiceTask::getDescription).toList());
         assertEquals(List.of(true, false),
                 history.get(0).tasks().stream().map(ServiceTask::isCompleted).toList());
+        assertEquals(new BigDecimal("30.00"), history.get(0).serviceCost());
     }
 }

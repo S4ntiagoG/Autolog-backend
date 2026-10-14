@@ -91,7 +91,7 @@ Desde la vista de vehículos o el tablero mecánico se accede a `service-orders/
 
 En esta orden de trabajo el mecánico puede indicar la hora estimada de recogida y escribir una actualización de hasta 300 caracteres para el cliente (por ejemplo, que el taller está esperando repuestos). La línea de tiempo refleja `PENDIENTE`, `EN PROGRESO` y `LISTO`; la actualización aparece asociada a la etapa activa. Completar todas las tareas muestra una indicación para que el mecánico confirme manualmente `LISTO`. No se puede marcar la orden como lista mientras haya tareas pendientes; si se agrega o desmarca una tarea cuando ya estaba lista, la orden vuelve a `EN PROGRESO`.
 
-El resumen muestra los subtotales de repuestos y mano de obra, calcula los insumos del taller como el 5% de repuestos/insumos y no vuelve a sumar el IVA cuando ya está incluido en los precios.
+El resumen muestra los subtotales de repuestos y mano de obra y suma únicamente esos valores. Los precios ingresados ya incluyen IVA del 19%; la interfaz muestra la porción de IVA incluida (total × 19/119) sin agregarla al total.
 
 ## Reglas de negocio importantes
 
@@ -202,7 +202,7 @@ Estas rutas se configuran en `src/app/app.routes.ts` y la aplicación inicia en 
 
 ## Historial y costos
 
-El frontend recibe `serviceCost` como un valor opcional en cada elemento del historial. Si el backend todavía no tiene un total registrado, muestra `Sin costo registrado`. El detalle calcula subtotales a partir de repuestos e insumos y mano de obra, agrega insumos del taller al 5% de repuestos/insumos y trata el IVA como incluido en los precios, sin adicionarlo de nuevo.
+El frontend recibe `serviceCost` como un valor opcional en cada elemento del historial. Si el backend todavía no tiene un total registrado, muestra `Sin costo registrado`. El detalle calcula el total sumando repuestos e insumos con mano de obra. Los precios incluyen IVA del 19%; su valor se muestra como parte del total y no se agrega de nuevo.
 
 El intake no captura precios: los precios se registran en la orden de trabajo.
 

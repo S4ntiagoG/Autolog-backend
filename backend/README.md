@@ -194,7 +194,7 @@ Cada elemento del historial incluye el estado guardado de esa orden. La búsqued
 
 ## Orden de trabajo mecánico
 
-`PUT /api/service-orders/{id}` actualiza los campos que envía, incluyendo `status`, `mechanicDiagnosis`, `tasks`, `parts`, `labor` y `serviceCost`. Las listas pueden tener cero o más elementos. Ejemplo:
+`PUT /api/service-orders/{id}` actualiza los campos que envía, incluyendo `status`, `mechanicDiagnosis`, `tasks`, `parts` y `labor`. El backend calcula `serviceCost` como la suma de repuestos/insumos y mano de obra, ignorando cualquier total enviado por el cliente. Las listas pueden tener cero o más elementos. Ejemplo:
 
 ```json
 {
@@ -209,11 +209,11 @@ Cada elemento del historial incluye el estado guardado de esa orden. La búsqued
   "labor": [
     { "description": "Cambio de pastillas", "hours": 1.5, "rate": 40000 }
   ],
-  "serviceCost": 152250
+  "serviceCost": 145000
 }
 ```
 
-Los estados de trabajo usados por la aplicación son `PENDIENTE`, `EN PROGRESO` y `LISTO`. La interfaz calcula los subtotales de partes e insumos y mano de obra; suma insumos de taller al 5% de partes/insumos. El IVA se considera incluido en los precios de partes/insumos y no se suma otra vez.
+Los estados de trabajo usados por la aplicación son `PENDIENTE`, `EN PROGRESO` y `LISTO`. El total de la orden es la suma de partes/insumos y mano de obra; el backend lo calcula a partir de esos conceptos, sin agregar cargos de taller. Los precios ingresados ya incluyen IVA del 19%; la interfaz muestra el valor incluido (total × 19/119), sin sumarlo al total.
 
 La orden también admite `estimatedPickupAt` (fecha y hora local ISO, por ejemplo `2026-10-14T17:00`) y `progressNote` (actualización para el cliente, hasta 300 caracteres). Ambos campos se editan desde la orden de trabajo mecánico y se devuelven en el historial del vehículo. La nota permite comunicar detalles como la espera de repuestos; no reemplaza los tres estados generales de la orden.
 
