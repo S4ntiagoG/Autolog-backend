@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
-import { ServiceOrderResponse } from '../../../core/models/api.models';
+import { ClientVehicleHomeResponse, ServiceOrderResponse } from '../../../core/models/api.models';
 import { ClientPortalService } from '../client-portal/client-portal.service';
 
 interface EvidenceImage {
@@ -26,6 +26,9 @@ export class ClientServiceOrderDetailComponent implements OnInit {
   readonly loading = signal(true);
   readonly error = signal('');
   readonly selectedEvidence = signal<EvidenceImage['slot']>('front');
+  readonly portalVehicle = signal<ClientVehicleHomeResponse | null>(
+    history.state.clientVehicle as ClientVehicleHomeResponse | undefined ?? null
+  );
 
   readonly evidenceImages = computed<EvidenceImage[]>(() => {
     const order = this.order();
@@ -81,6 +84,18 @@ export class ClientServiceOrderDetailComponent implements OnInit {
     this.portal.getServiceOrder(orderId).subscribe({
       next: (order) => {
         this.order.set(order);
+        if (!this.portalVehicle()) {
+          this.portalVehicle.set({
+            vehicleId: order.vehicle.id,
+            vehicleType: order.vehicle.vehicleType,
+            brand: order.vehicle.brand,
+            model: order.vehicle.model,
+            vehicleYear: order.vehicle.vehicleYear,
+            plate: order.vehicle.plate,
+            orderNumber: `SO-${new Date(order.entryDate).getFullYear()}-${String(order.id).padStart(6, '0')}`,
+            status: order.status ?? 'PENDIENTE'
+          });
+        }
         const firstImage = this.evidenceImages()[0];
         if (firstImage) {
           this.selectedEvidence.set(firstImage.slot);

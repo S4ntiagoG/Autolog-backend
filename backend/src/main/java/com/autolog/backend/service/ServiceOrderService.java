@@ -37,7 +37,10 @@ public class ServiceOrderService {
                         order.getCurrentMileage(),
                         order.getCustomerObservations(),
                         order.getServiceCost(),
-                        order.getStatus()))
+                        order.getStatus(),
+                        order.getEstimatedPickupAt(),
+                        order.getProgressNote(),
+                        order.getTasks()))
                 .collect(Collectors.toList());
     }
 

@@ -169,6 +169,8 @@ public class ServiceOrderController {
                     if (serviceOrder.getServiceCost() != null) {
                         existing.setServiceCost(serviceOrder.getServiceCost());
                     }
+                    existing.setEstimatedPickupAt(serviceOrder.getEstimatedPickupAt());
+                    existing.setProgressNote(serviceOrder.getProgressNote());
                     return ResponseEntity.ok(serviceOrderService.saveServiceOrder(existing));
                 })
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());

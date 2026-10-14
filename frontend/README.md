@@ -79,6 +79,7 @@ Después de crear la orden, el frontend envía los archivos seleccionados como `
 4. Angular consulta `GET /api/service-orders/vehicle/{vehicleId}`.
 5. La pantalla muestra el historial ordenado por fecha, con motivo, fecha, kilometraje, observaciones, total y estado de cada servicio. El historial se actualiza cada 15 segundos mientras el portal está abierto.
 6. El enlace `Detalles` abre `/client/service-orders/{id}`, donde el cliente puede revisar la evidencia fotográfica, datos del vehículo, tareas, repuestos, mano de obra y resumen de costos. `Descargar factura` abre el diálogo de impresión del navegador, desde donde se puede imprimir o guardar como PDF.
+7. La pestaña `Seguimiento` presenta una línea de tiempo según el estado guardado de la orden, incluye las tareas de reparación en el orden de registro y marca las completadas, además de mostrar la hora estimada de recogida y la actualización que registre el mecánico.
 
 El detalle usa el estado guardado en la orden (`PENDIENTE`, `EN PROGRESO` o `LISTO`). Si una orden antigua no tiene imágenes almacenadas, se indica que no se cargó evidencia para ese ingreso.
 
@@ -87,6 +88,8 @@ La vista del detalle incluye navegación de regreso al portal, estado resaltado 
 ### Orden de trabajo mecánico
 
 Desde la vista de vehículos o el tablero mecánico se accede a `service-orders/vehicle/{vehicleId}/work`. Allí se puede actualizar el estado y guardar las tareas con su condición de completadas, repuestos e insumos con cantidades y precio unitario, y mano de obra con horas y tarifa. El diagnóstico, kilometraje y observaciones iniciales son de solo lectura en esta vista; se editan desde el ingreso del vehículo.
+
+En esta orden de trabajo el mecánico puede indicar la hora estimada de recogida y escribir una actualización de hasta 300 caracteres para el cliente (por ejemplo, que el taller está esperando repuestos). La línea de tiempo refleja `PENDIENTE`, `EN PROGRESO` y `LISTO`; la actualización aparece asociada a la etapa activa. Completar todas las tareas muestra una indicación para que el mecánico confirme manualmente `LISTO`. No se puede marcar la orden como lista mientras haya tareas pendientes; si se agrega o desmarca una tarea cuando ya estaba lista, la orden vuelve a `EN PROGRESO`.
 
 El resumen muestra los subtotales de repuestos y mano de obra, calcula los insumos del taller como el 5% de repuestos/insumos y no vuelve a sumar el IVA cuando ya está incluido en los precios.
 
@@ -120,7 +123,7 @@ Desde la carpeta `backend`:
 docker compose up -d
 ```
 
-Esto levanta PostgreSQL en `localhost:5432` con estas credenciales:
+Esto levanta PostgreSQL en `localhost:5433` con estas credenciales:
 
 - Base de datos: `autolog_db`
 - Usuario: `autolog`

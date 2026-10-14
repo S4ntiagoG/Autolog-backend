@@ -37,6 +37,11 @@ export class ServiceWorkOrderComponent implements OnInit {
   });
   readonly mileage = signal<number | null>(null);
   readonly status = signal<VehicleServiceStatus>('PENDIENTE');
+  readonly allTasksCompleted = computed(() =>
+    this.tasks().length > 0 && this.tasks().every((task) => task.completed)
+  );
+  readonly estimatedPickupAt = signal('');
+  readonly progressNote = signal('');
   readonly tasks = signal<ServiceTaskRequest[]>([]);
   readonly parts = signal<ServicePartRequest[]>([]);
   readonly labor = signal<ServiceLaborRequest[]>([]);
@@ -92,13 +97,31 @@ export class ServiceWorkOrderComponent implements OnInit {
   onStatusChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     if (value === 'PENDIENTE' || value === 'EN PROGRESO' || value === 'LISTO') {
+      if (value === 'LISTO' && this.tasks().some((task) => !task.completed)) {
+        (event.target as HTMLSelectElement).value = this.status();
+        this.error.set('Completa todas las tareas antes de confirmar que el vehículo está listo para entrega.');
+        this.success.set('');
+        return;
+      }
       this.status.set(value);
+      this.error.set('');
       this.success.set('');
     }
   }
 
+  onEstimatedPickupChange(event: Event): void {
+    this.estimatedPickupAt.set((event.target as HTMLInputElement).value);
+    this.success.set('');
+  }
+
+  onProgressNoteChange(event: Event): void {
+    this.progressNote.set((event.target as HTMLTextAreaElement).value);
+    this.success.set('');
+  }
+
   addTask(): void {
     this.tasks.update((items) => [...items, { description: '', completed: false }]);
+    this.updateStatusFromTasks();
     this.success.set('');
   }
 
@@ -115,11 +138,14 @@ export class ServiceWorkOrderComponent implements OnInit {
     this.tasks.update((items) => items.map((item, position) =>
       position === index ? { ...item, completed } : item
     ));
+    this.updateStatusFromTasks();
     this.success.set('');
   }
 
   removeTask(index: number): void {
     this.tasks.update((items) => items.filter((_, position) => position !== index));
+    this.updateStatusFromTasks();
+    this.success.set('');
   }
 
   addPart(): void {
@@ -184,6 +210,8 @@ export class ServiceWorkOrderComponent implements OnInit {
       customerObservations: existingOrder?.customerObservations ?? '',
       ...(existingOrder?.mechanicDiagnosis ? { mechanicDiagnosis: existingOrder.mechanicDiagnosis } : {}),
       status: this.status(),
+      estimatedPickupAt: this.estimatedPickupAt() || null,
+      progressNote: this.progressNote().trim() || null,
       tasks: this.tasks(),
       parts: this.parts(),
       labor: this.labor(),
@@ -243,9 +271,17 @@ export class ServiceWorkOrderComponent implements OnInit {
   private loadOrder(order: ServiceOrderResponse | null): void {
     this.mileage.set(order?.currentMileage ?? null);
     this.status.set(order?.status ?? 'PENDIENTE');
+    this.estimatedPickupAt.set(order?.estimatedPickupAt?.slice(0, 16) ?? '');
+    this.progressNote.set(order?.progressNote ?? '');
     this.tasks.set(order?.tasks ?? []);
     this.parts.set(order?.parts ?? []);
     this.labor.set(order?.labor ?? []);
+  }
+
+  private updateStatusFromTasks(): void {
+    if (this.status() === 'LISTO' && this.tasks().some((task) => !task.completed)) {
+      this.status.set('EN PROGRESO');
+    }
   }
 
   private hasValidItems(): boolean {
@@ -282,6 +318,8 @@ export class ServiceWorkOrderComponent implements OnInit {
     ));
 
     return savedOrder.status === request.status &&
+      (savedOrder.estimatedPickupAt?.slice(0, 16) ?? null) === (request.estimatedPickupAt ?? null) &&
+      (savedOrder.progressNote ?? null) === (request.progressNote ?? null) &&
       Number(savedOrder.serviceCost) === Number(request.serviceCost) &&
       sameTasks &&
       sameParts &&

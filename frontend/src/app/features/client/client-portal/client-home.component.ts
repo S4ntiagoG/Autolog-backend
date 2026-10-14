@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { catchError, of, switchMap, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -8,6 +8,12 @@ import { ClientVehicleHomeResponse, ServiceHistoryItem } from '../../../core/mod
 import { ClientPortalService } from './client-portal.service';
 
 type ClientTab = 'HISTORY' | 'TRACKING';
+type TimelineState = 'complete' | 'active' | 'pending';
+
+interface TimelineStep {
+  label: string;
+  description: string;
+}
 
 @Component({
   selector: 'app-client-home',
@@ -26,6 +32,17 @@ export class ClientHomeComponent implements OnInit {
   readonly historyItems = signal<ServiceHistoryItem[]>([]);
   readonly historyLoading = signal(false);
   readonly historyError = signal('');
+  readonly latestOrder = computed(() => this.historyItems()[0] ?? null);
+  readonly timelineSteps: TimelineStep[] = [
+    { label: 'Ingresado al taller', description: 'Recepción y registro inicial.' },
+    { label: 'En diagnóstico', description: 'El taller revisa el vehículo.' },
+    { label: 'En reparación', description: 'Se realizan los trabajos de servicio.' },
+    { label: 'Listo para entrega', description: 'El vehículo está listo para recoger.' }
+  ];
+  readonly progressTitle = computed(() => {
+    const vehicleType = this.vehicle()?.vehicleType;
+    return `Progreso de tu ${(vehicleType || 'vehículo').toLocaleLowerCase('es-CO')}`;
+  });
 
   ngOnInit(): void {
     const vehicle = this.vehicle() ?? history.state.clientVehicle as ClientVehicleHomeResponse | undefined;
@@ -68,6 +85,49 @@ export class ClientHomeComponent implements OnInit {
       default:
         return 'border-neutral-700 bg-neutral-900 text-neutral-400';
     }
+  }
+
+  timelineState(index: number): TimelineState {
+    const status = this.latestOrder()?.status?.toUpperCase() ?? this.vehicle()?.status?.toUpperCase();
+    if (index === 0 || status === 'LISTO') {
+      return 'complete';
+    }
+    const activeIndex = status === 'EN PROGRESO' ? 2 : 1;
+    if (index < activeIndex) {
+      return 'complete';
+    }
+    return index === activeIndex ? 'active' : 'pending';
+  }
+
+  showProgressNote(index: number): boolean {
+    const status = this.latestOrder()?.status?.toUpperCase();
+    return Boolean(this.latestOrder()?.progressNote) &&
+      (status === 'LISTO' ? index === this.timelineSteps.length - 1 : this.timelineState(index) === 'active');
+  }
+
+  taskTimelineState(index: number): TimelineState {
+    const tasks = this.latestOrder()?.tasks ?? [];
+    const task = tasks[index];
+    if (task?.completed) {
+      return 'complete';
+    }
+    const status = this.latestOrder()?.status?.toUpperCase();
+    const firstIncompleteTask = tasks.findIndex((item) => !item.completed);
+    return status === 'EN PROGRESO' && index === firstIncompleteTask ? 'active' : 'pending';
+  }
+
+  orderTasks(order: ServiceHistoryItem): ServiceHistoryItem['tasks'] {
+    return order.tasks ?? [];
+  }
+
+  formatPickupTime(value: string): string {
+    return new Intl.DateTimeFormat('es-CO', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      hour: 'numeric',
+      minute: '2-digit'
+    }).format(new Date(value));
   }
 
   private loadHistory(vehicleId: number): void {

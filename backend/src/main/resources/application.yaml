@@ -7,12 +7,13 @@ spring:
       max-file-size: 10MB
       max-request-size: 50MB
   datasource:
-    url: jdbc:postgresql://localhost:5432/autolog_db
+    url: jdbc:postgresql://localhost:5433/autolog_db
     username: autolog
     password: autolog1234
     driver-class-name: org.postgresql.Driver
 
   jpa:
+    defer-datasource-initialization: true
     hibernate:
       ddl-auto: update
     show-sql: true
@@ -20,6 +21,10 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema.sql
 
 autolog:
   upload-dir: uploads

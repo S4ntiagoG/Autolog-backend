@@ -1,7 +1,7 @@
 <main class="client-detail-page">
   <header class="client-detail-header">
     <div class="brand-lockup">
-      <a routerLink="/client/home" aria-label="Volver al home">
+      <a routerLink="/client/home" [state]="{ clientVehicle: portalVehicle() }" aria-label="Volver al portal del vehículo">
         <img class="brand-mark" src="/ciclo-motor-la-villa.jpeg" alt="Ciclo Motor La Villa" />
       </a>
       <div class="brand-caption">
@@ -10,12 +10,12 @@
       </div>
     </div>
     <div class="header-actions">
-      <a routerLink="/client/home" class="home-button">
+      <a routerLink="/client/home" [state]="{ clientVehicle: portalVehicle() }" class="home-button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
           <path d="m15 18-6-6 6-6"></path>
           <path d="M9 12h12"></path>
         </svg>
-        VOLVER AL HOME
+        VOLVER AL VEHÍCULO
       </a>
     </div>
   </header>

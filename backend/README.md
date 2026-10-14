@@ -26,13 +26,13 @@ Cada orden puede guardar diagnóstico mecánico, estado, tareas (incluido si est
 
 ### 1. Levantar PostgreSQL
 
-Desde la carpeta raiz del proyecto:
+Desde la carpeta `backend`:
 
 ```powershell
 docker compose up -d
 ```
 
-La base de datos queda disponible en `localhost:5432` con estos datos:
+La base de datos queda disponible en `localhost:5433` con estos datos:
 
 - Base de datos: `autolog_db`
 - Usuario: `autolog`
@@ -40,7 +40,7 @@ La base de datos queda disponible en `localhost:5432` con estos datos:
 
 ### 2. Ejecutar el backend
 
-En otra terminal, desde la misma carpeta:
+En otra terminal, también desde la carpeta `backend`:
 
 ```powershell
 ./gradlew bootRun
@@ -183,7 +183,9 @@ La respuesta contiene las órdenes del vehículo ordenadas de forma descendente 
 		"currentMileage": 5000,
 		"customerObservations": "Revisar frenos y aceite",
 		"serviceCost": null,
-		"status": "PENDIENTE"
+		"status": "PENDIENTE",
+		"estimatedPickupAt": null,
+		"progressNote": null
 	}
 ]
 ```
@@ -212,6 +214,12 @@ Cada elemento del historial incluye el estado guardado de esa orden. La búsqued
 ```
 
 Los estados de trabajo usados por la aplicación son `PENDIENTE`, `EN PROGRESO` y `LISTO`. La interfaz calcula los subtotales de partes e insumos y mano de obra; suma insumos de taller al 5% de partes/insumos. El IVA se considera incluido en los precios de partes/insumos y no se suma otra vez.
+
+La orden también admite `estimatedPickupAt` (fecha y hora local ISO, por ejemplo `2026-10-14T17:00`) y `progressNote` (actualización para el cliente, hasta 300 caracteres). Ambos campos se editan desde la orden de trabajo mecánico y se devuelven en el historial del vehículo. La nota permite comunicar detalles como la espera de repuestos; no reemplaza los tres estados generales de la orden.
+
+El historial también devuelve la lista `tasks` de la orden con `description` y `completed`, conservando el orden en que el mecánico las registró. El portal del cliente presenta estas tareas bajo la etapa de reparación.
+
+Al iniciar el backend se ejecuta `src/main/resources/db/schema.sql` para crear la columna de orden de tareas si falta y asignar posiciones a las tareas ya guardadas. Reinicia el backend después de actualizar el proyecto para aplicar esta migración local.
 
 ## Evidencia fotográfica
 
@@ -269,6 +277,7 @@ GET http://localhost:8080/api/service-orders/{id}/evidence/{slot}
 - `entryDate` usa el formato `YYYY-MM-DD`.
 - `serviceCost` existe como total persistido del mantenimiento, pero no se captura en el formulario de intake.
 - El costo se puede guardar desde la orden de trabajo, junto con el estado, tareas, repuestos/insumos y mano de obra.
+- La orden de trabajo permite guardar la hora estimada de recogida (`estimatedPickupAt`) y una actualización visible para el cliente (`progressNote`).
 - Las tareas, repuestos/insumos y mano de obra se persisten dentro de la orden.
 - El detalle de cliente consume `GET /api/service-orders/{id}` y puede recuperar las imágenes desde el endpoint de evidencia. La factura se presenta desde el frontend mediante la vista de impresión del navegador.
 - Las imágenes antiguas cuyos campos solo contienen un nombre pero no tienen un archivo correspondiente bajo `uploads/` no se podrán recuperar desde el endpoint de evidencia.

@@ -86,6 +86,7 @@
                       <strong class="text-xs font-semibold text-neutral-200">{{ formatCost(item.serviceCost) }}</strong>
                       <a
                         [routerLink]="['/client/service-orders', item.serviceOrderId]"
+                        [state]="{ clientVehicle: currentVehicle }"
                         class="history-details"
                         title="Ver detalle y factura del servicio"
                         [attr.aria-label]="'Ver detalle de servicio ' + item.primaryReason"
@@ -99,8 +100,68 @@
               </div>
             }
           } @else {
-            <h2 class="text-sm font-semibold text-neutral-200">Seguimiento</h2>
-            <p class="mt-3 text-xs text-neutral-500">Esta sección estará disponible próximamente.</p>
+            <h2 class="text-sm font-semibold text-neutral-200">{{ progressTitle() }}</h2>
+            @if (historyLoading() && !latestOrder()) {
+              <p class="mt-4 text-xs text-neutral-500">Cargando el progreso del vehículo…</p>
+            } @else if (latestOrder(); as currentOrder) {
+              <ol class="progress-timeline" aria-label="Etapas del servicio">
+                @for (step of timelineSteps; track step.label; let index = $index) {
+                  <li
+                    class="timeline-step"
+                    [class.timeline-step--complete]="timelineState(index) === 'complete'"
+                    [class.timeline-step--active]="timelineState(index) === 'active'"
+                    [class.timeline-step--pending]="timelineState(index) === 'pending'"
+                    [attr.aria-current]="timelineState(index) === 'active' ? 'step' : null"
+                  >
+                    <span class="timeline-marker" aria-hidden="true">
+                      @if (timelineState(index) === 'complete') { ✓ }
+                      @else if (timelineState(index) === 'active') { ● }
+                    </span>
+                    <div class="timeline-copy">
+                      <h3>{{ step.label }}</h3>
+                      <p>{{ step.description }}</p>
+                      @if (showProgressNote(index)) {
+                        <p class="timeline-update"><strong>Actualización del taller:</strong> {{ currentOrder.progressNote }}</p>
+                      }
+                      @if (index === 2 && orderTasks(currentOrder).length > 0) {
+                        <ol class="timeline-tasks" aria-label="Tareas de la orden de trabajo">
+                          @for (task of orderTasks(currentOrder); track $index; let taskIndex = $index) {
+                            <li
+                              class="timeline-task"
+                              [class.timeline-task--complete]="taskTimelineState(taskIndex) === 'complete'"
+                              [class.timeline-task--active]="taskTimelineState(taskIndex) === 'active'"
+                              [class.timeline-task--pending]="taskTimelineState(taskIndex) === 'pending'"
+                            >
+                              <span class="timeline-task__marker" aria-hidden="true">
+                                @if (taskTimelineState(taskIndex) === 'complete') { ✓ }
+                                @else if (taskTimelineState(taskIndex) === 'active') { ● }
+                              </span>
+                              <span>{{ task.description }}</span>
+                            </li>
+                          }
+                        </ol>
+                      }
+                    </div>
+                  </li>
+                }
+              </ol>
+              <div class="pickup-estimate">
+                <span class="pickup-estimate__icon" aria-hidden="true">◷</span>
+                <div>
+                  <p>Hora estimada de recogida</p>
+                  @if (currentOrder.estimatedPickupAt; as pickupAt) {
+                    <strong>{{ formatPickupTime(pickupAt) }}</strong>
+                  } @else {
+                    <strong class="pickup-estimate__pending">Aún no definida por el taller</strong>
+                  }
+                </div>
+              </div>
+              @if (historyError()) {
+                <p class="mt-3 text-xs text-amber-300" role="status">{{ historyError() }}</p>
+              }
+            } @else {
+              <p class="mt-4 text-xs text-neutral-500">El seguimiento estará disponible cuando el taller registre una orden para este vehículo.</p>
+            }
           }
         </section>
       </section>

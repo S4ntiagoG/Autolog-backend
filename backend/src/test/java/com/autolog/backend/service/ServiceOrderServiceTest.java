@@ -1,6 +1,8 @@
 package com.autolog.backend.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,6 +20,7 @@ import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.autolog.backend.model.ServiceOrder;
+import com.autolog.backend.model.ServiceTask;
 import com.autolog.backend.model.Vehicle;
 import com.autolog.backend.repository.ServiceOrderRepository;
 
@@ -77,5 +80,37 @@ class ServiceOrderServiceTest {
         assertTrue(foundOrder.isPresent());
         assertEquals("Cambio de pastillas de freno", foundOrder.get().getPrimaryReason());
         verify(serviceOrderRepository, times(1)).findById(orderId);
+    }
+
+    @Test
+    @DisplayName("Incluye la hora estimada y la actualización en el historial del cliente")
+    void includesPickupAndProgressNoteInVehicleHistory() {
+        ServiceOrder order = new ServiceOrder();
+        LocalDateTime estimatedPickupAt = LocalDateTime.of(2026, 10, 14, 17, 0);
+        order.setId(3L);
+        order.setEntryDate(LocalDate.of(2026, 10, 13));
+        order.setPrimaryReason("Reparación");
+        order.setCurrentMileage(12000);
+        order.setStatus("EN PROGRESO");
+        order.setEstimatedPickupAt(estimatedPickupAt);
+        order.setProgressNote("Esperando repuestos");
+        ServiceTask firstTask = new ServiceTask();
+        firstTask.setDescription("Revisar frenos");
+        firstTask.setCompleted(true);
+        ServiceTask secondTask = new ServiceTask();
+        secondTask.setDescription("Cambiar pastillas");
+        secondTask.setCompleted(false);
+        order.setTasks(List.of(firstTask, secondTask));
+        when(serviceOrderRepository.findByVehicleIdOrderByEntryDateDescIdDesc(7L))
+                .thenReturn(List.of(order));
+
+        var history = serviceOrderService.getHistoryByVehicleId(7L);
+
+        assertEquals(estimatedPickupAt, history.get(0).estimatedPickupAt());
+        assertEquals("Esperando repuestos", history.get(0).progressNote());
+        assertEquals(List.of("Revisar frenos", "Cambiar pastillas"),
+                history.get(0).tasks().stream().map(ServiceTask::getDescription).toList());
+        assertEquals(List.of(true, false),
+                history.get(0).tasks().stream().map(ServiceTask::isCompleted).toList());
     }
 }

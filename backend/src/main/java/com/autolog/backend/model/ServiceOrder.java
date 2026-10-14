@@ -1,6 +1,7 @@
 package com.autolog.backend.model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,8 +54,14 @@ public class ServiceOrder {
     @Column(length = 30)
     private String status = "PENDIENTE";
 
+    private LocalDateTime estimatedPickupAt;
+
+    @Column(length = 300)
+    private String progressNote;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "service_order_tasks", joinColumns = @JoinColumn(name = "service_order_id"))
+    @OrderColumn(name = "task_position")
     private List<ServiceTask> tasks = new ArrayList<>();
 
     @ElementCollection(fetch = FetchType.EAGER)

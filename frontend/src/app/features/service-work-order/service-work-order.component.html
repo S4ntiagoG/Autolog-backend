@@ -13,9 +13,9 @@
         <label class="status-control">
           <span class="sr-only">Estado de la orden</span>
           <select [value]="status()" (change)="onStatusChange($event)">
-            <option value="PENDIENTE">PENDIENTE</option>
-            <option value="EN PROGRESO">EN PROGRESO</option>
-            <option value="LISTO">LISTO</option>
+            <option value="PENDIENTE">PENDIENTE · En diagnóstico</option>
+            <option value="EN PROGRESO">EN PROGRESO · En reparación</option>
+            <option value="LISTO">LISTO · Listo para entrega</option>
           </select>
         </label>
         <a routerLink="/vehicles" class="secondary-button">Volver a vehículos</a>
@@ -63,6 +63,35 @@
             </div>
           </section>
 
+          <section class="work-card p-[13px]">
+            <h2><span aria-hidden="true">◷</span> Seguimiento para el cliente</h2>
+            <p class="empty-note">Comparte una actualización breve y la hora estimada de recogida.</p>
+            <div class="grid grid-cols-1 gap-3 px-3 pb-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
+              <label class="grid content-start gap-1.5 text-[10px] text-neutral-300">
+                <span>Hora estimada de recogida</span>
+                <input
+                  type="datetime-local"
+                  [value]="estimatedPickupAt()"
+                  (input)="onEstimatedPickupChange($event)"
+                  aria-label="Hora estimada de recogida"
+                  class="w-full"
+                />
+              </label>
+              <label class="grid content-start gap-1.5 text-[10px] text-neutral-300">
+                <span>Actualización del taller</span>
+                <textarea
+                  rows="3"
+                  maxlength="300"
+                  [value]="progressNote()"
+                  (input)="onProgressNoteChange($event)"
+                  placeholder="Ej. Estamos esperando que lleguen los repuestos."
+                  aria-label="Actualización del taller visible para el cliente"
+                  class="w-full resize-y"
+                ></textarea>
+              </label>
+            </div>
+          </section>
+
           <section class="work-card tasks-card">
             <div class="section-heading">
               <h2><span aria-hidden="true">☷</span> Tareas realizadas</h2>
@@ -70,6 +99,9 @@
             </div>
             @if (tasks().length === 0) {
               <p class="empty-note">Agrega las tareas que se deben realizar en este vehículo.</p>
+            }
+            @if (allTasksCompleted() && status() !== 'LISTO') {
+              <p class="empty-note" role="status">Todas las tareas están realizadas. Confirma “LISTO · Listo para entrega” cuando hayas verificado que el vehículo se puede recoger.</p>
             }
             <div class="task-list">
               @for (task of tasks(); track $index) {

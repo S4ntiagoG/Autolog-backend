@@ -48,6 +48,9 @@ export interface ServiceHistoryItem {
   customerObservations: string | null;
   serviceCost: number | null;
   status: VehicleServiceStatus;
+  estimatedPickupAt: string | null;
+  progressNote: string | null;
+  tasks: ServiceTaskRequest[];
 }
 
 export interface ServiceOrderRequest {
@@ -56,6 +59,8 @@ export interface ServiceOrderRequest {
   currentMileage: number;
   customerObservations: string;
   serviceCost?: number | null;
+  estimatedPickupAt?: string | null;
+  progressNote?: string | null;
   mechanicDiagnosis?: string;
   status?: VehicleServiceStatus;
   tasks?: ServiceTaskRequest[];
@@ -98,6 +103,8 @@ export interface ServiceOrderUpdateRequest {
   primaryReason: string;
   currentMileage: number;
   customerObservations: string;
+  estimatedPickupAt: string | null;
+  progressNote: string | null;
 }
 
 export interface VehicleIntakeDraft {

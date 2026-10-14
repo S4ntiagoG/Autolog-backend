@@ -90,7 +90,9 @@ export class VehicleIntakeService {
     const orderRequest: ServiceOrderUpdateRequest = {
       primaryReason: draft.entry.primaryReason,
       currentMileage: draft.entry.currentMileage,
-      customerObservations: draft.entry.customerObservations
+      customerObservations: draft.entry.customerObservations,
+      estimatedPickupAt: order.estimatedPickupAt ?? null,
+      progressNote: order.progressNote ?? null
     };
 
     return this.http.put<ClientResponse>(
