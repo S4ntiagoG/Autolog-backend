@@ -1,34 +1,41 @@
 <div class="mechanic-layout">
   <aside class="mechanic-sidebar">
-    <a class="mechanic-brand" routerLink="/vehicles" aria-label="Ciclo Motor La Villa, ir a vehículos">
+    <a class="mechanic-brand" [routerLink]="dashboardRoute()" aria-label="Ciclo Motor La Villa, ir al tablero">
       <img src="/ciclo-motor-la-villa.jpeg" alt="Ciclo Motor La Villa" />
       <span class="mechanic-brand__caption">POWER BY</span>
       <strong>AUTOLOG</strong>
     </a>
 
     <nav class="mechanic-nav" aria-label="Navegación del taller">
-      <a
-        class="mechanic-nav__link"
-        routerLink="/dashboard"
-        routerLinkActive="is-active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >
+      <a class="mechanic-nav__link" [routerLink]="dashboardRoute()" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">
         <img src="/icons/tablero.svg" alt="" aria-hidden="true" />
         <span>Tablero</span>
       </a>
-      <button type="button" class="mechanic-nav__link">
-        <img src="/icons/inventario.svg" alt="" aria-hidden="true" />
-        <span>Inventario</span>
-      </button>
-      <a
-        class="mechanic-nav__link"
-        routerLink="/vehicles"
-        routerLinkActive="is-active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >
+      <a class="mechanic-nav__link" routerLink="/vehicles" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">
         <img src="/icons/vehiculos%20.svg" alt="" aria-hidden="true" />
         <span>Vehículos</span>
       </a>
+      <a class="mechanic-nav__link" routerLink="/inventory" routerLinkActive="is-active">
+        <img src="/icons/inventario.svg" alt="" aria-hidden="true" />
+        <span>Inventario</span>
+      </a>
+      @if (mechanic()?.role === 'ADMIN') {
+        <a class="mechanic-nav__link" routerLink="/mechanics" routerLinkActive="is-active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+            <circle cx="9.5" cy="7" r="4" />
+            <path d="M20 8v6m3-3h-6" />
+          </svg>
+          <span>Mecánicos</span>
+        </a>
+        <a class="mechanic-nav__link" routerLink="/settings" routerLinkActive="is-active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z" />
+            <path d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 0 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 0 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 0 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9Z" />
+          </svg>
+          <span>Configuración</span>
+        </a>
+      }
     </nav>
 
     <div class="mechanic-sidebar__footer">
@@ -36,6 +43,13 @@
         <span aria-hidden="true">+</span>
         Registrar nuevo vehículo
       </a>
+      <p class="mt-4 text-xs text-neutral-400">{{ mechanic()?.nombre }}</p>
+      @if (logoutError()) {
+        <p role="alert" class="mt-2 text-xs text-red-300">{{ logoutError() }}</p>
+      }
+      <button type="button" class="mt-2 text-xs text-neutral-400 underline underline-offset-4 hover:text-white" (click)="logout()">
+        Cerrar sesión
+      </button>
     </div>
   </aside>
 

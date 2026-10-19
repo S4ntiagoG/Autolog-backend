@@ -24,6 +24,14 @@ Cada orden puede guardar diagnóstico mecánico, estado, tareas (incluido si est
 
 ## Ejecución local
 
+### Arranque recomendado en Windows
+
+Desde la carpeta `Autolog-backend`, ejecuta `start-autolog.bat`. El script levanta PostgreSQL, genera el JAR del backend y abre el backend y el frontend en ventanas separadas. Mantén abiertas esas ventanas mientras uses la aplicación.
+
+La API queda en `http://localhost:8080` y el frontend en `http://localhost:4200`. Para detener la aplicación, cierra las ventanas del backend y del frontend. PostgreSQL puede permanecer activo; para detenerlo manualmente, ejecuta `docker compose down` desde `backend`.
+
+El script usa `gradlew.bat`, `java` y `npm.cmd` directamente, por lo que evita la política de ejecución de scripts de PowerShell y no depende del comando `debugjava` de VS Code. Omite las pruebas durante el arranque (`-x test`); ejecútalas por separado cuando quieras validar cambios.
+
 ### 1. Levantar PostgreSQL
 
 Desde la carpeta `backend`:
@@ -262,9 +270,37 @@ GET http://localhost:8080/api/service-orders/{id}/evidence/{slot}
 | GET | `/api/service-orders/vehicle/{vehicleId}` | Historial del vehículo |
 | POST | `/api/service-orders/{id}/evidence` | Carga evidencias de la orden como multipart |
 | GET | `/api/service-orders/{id}/evidence/{slot}` | Devuelve una evidencia de la orden |
+| POST | `/api/service-orders/{id}/simulate-payment` | Registra el medio de pago simulado; valida placa y documento |
 | PUT | `/api/service-orders/{id}` | Actualiza datos de la orden |
 | DELETE | `/api/service-orders/{id}` | Elimina la orden |
 | POST | `/api/vehicles/search` | Busca vehículo por placa y documento |
+| GET | `/api/mechanics/auth/csrf` | Inicializa la protección CSRF del inicio de sesión |
+| POST | `/api/mechanics/auth/login` | Inicia sesión del mecánico con `codigoMecanico` y `password` |
+| GET | `/api/mechanics/auth/me` | Devuelve la sesión del mecánico autenticado |
+| POST | `/api/mechanics/auth/logout` | Cierra la sesión |
+| GET | `/api/mechanics/activity` | Devuelve los diez eventos recientes del taller |
+
+## Acceso del taller
+
+La tabla `mecanicos` existente contiene `codigo_mecanico`, `nombre` y `password`; `codigoMecanico` es el usuario de acceso. La contraseña se verifica con BCrypt y el inicio de sesión crea una sesión de servidor mediante cookie HttpOnly, con protección contra fijación de sesión. CSRF se exige en las solicitudes que modifican datos y en las solicitudes autenticadas del taller. Las lecturas de clientes, vehículos, órdenes y actividad, y las operaciones de escritura del taller requieren una sesión con rol `MECHANIC` o `ADMIN`; la búsqueda pública `/api/vehicles/search` y las consultas de detalle/historial/evidencia del portal cliente permanecen disponibles sin autenticación.
+
+La pantalla de ingreso compartida del taller es `/mechanic/login`; después del acceso, el mecánico llega al tablero `/dashboard` y el administrador a `/admin/dashboard`. La consulta por placa y documento de `/client/search` es exclusiva del portal del cliente y no aparece en la navegación del taller. Las rutas del taller también redirigen al inicio de sesión si no hay una sesión válida.
+
+La creación de cuentas de administrador no está implementada en la aplicación y no se crea una cuenta inicial automáticamente. El administrador debe agregarse manualmente a `admins` antes de iniciar sesión. Al crear la fila, guarda la contraseña como BCrypt (nunca en texto plano).
+
+En el historial del cliente, cuando una orden está `LISTO` y tiene un total mayor que cero, se puede elegir efectivo, transferencia, tarjeta débito o tarjeta crédito y registrar una simulación. No se procesa ningún cobro real ni cambia el estado de la orden: después del pago continúa como `LISTO`. La API comprueba placa y documento contra el vehículo de la orden, impide pagos antes de que el servicio esté listo y no permite registrar un segundo pago. Se guarda el método, la fecha y el importe final en `service_orders.payment_method`, `service_orders.payment_recorded_at` y `service_orders.payment_amount`; estos datos aparecen en las consultas del cliente y del mecánico. Una orden pagada no admite cambios ni eliminación, y tampoco se pueden cargar evidencias adicionales.
+
+El tablero del taller consulta `GET /api/mechanics/activity` para mostrar los diez eventos más recientes. El sistema registra quién ingresó un vehículo, cada cambio de estado de una orden y las tareas marcadas como completadas. Los cambios de tareas se registran al guardar la orden de trabajo, no al marcar la casilla. El registro del pago simulado no crea un evento en esta bitácora. Los eventos se conservan en `workshop_activity` y requieren una sesión autenticada de mecánico o administrador.
+
+El formulario de acceso del taller también autentica las cuentas de `admins`. Una cuenta agregada a esa tabla recibe el rol `ADMIN` y se dirige al tablero `/admin/dashboard`; las cuentas de `mecanicos` conservan el rol `MECHANIC` y la ruta `/dashboard`. La contraseña de `admins.password` debe guardarse como hash BCrypt, nunca como texto plano. En PostgreSQL se puede crear con:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+INSERT INTO admins (usuario, password)
+VALUES ('admin.taller', crypt('CAMBIAR_POR_UNA_CONTRASENA_SEGURA', gen_salt('bf', 12)));
+```
+
+Los nombres de usuario deben ser únicos entre `admins.usuario` y `mecanicos.codigo_mecanico`; si hay una colisión, el acceso se rechaza de forma segura. El rol devuelto por el servidor gobierna la ruta inicial y la navegación del frontend: el administrador accede a `/admin/dashboard` y ve Tablero, Vehículos, Inventario, Mecánicos y Configuración; el mecánico accede a `/dashboard` y ve únicamente Tablero, Vehículos e Inventario. El acceso directo a las rutas administrativas también se restringe en el frontend. La sesión se comparte entre pestañas del mismo perfil del navegador, por lo que cerrar sesión o autenticarse con otra cuenta afecta a todas ellas.
 
 ## Datos importantes
 

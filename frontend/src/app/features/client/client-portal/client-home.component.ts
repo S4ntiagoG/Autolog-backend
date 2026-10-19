@@ -1,11 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
-import { catchError, map, of, switchMap, timer } from 'rxjs';
+import { TimeoutError, catchError, finalize, map, of, switchMap, timer, timeout } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import {
   ClientVehicleHomeResponse,
+  PaymentMethod,
+  PAYMENT_METHOD_LABELS,
   ServiceHistoryItem,
   ServiceOrderResponse
 } from '../../../core/models/api.models';
@@ -44,6 +47,12 @@ export class ClientHomeComponent implements OnInit {
   readonly historyError = signal('');
   readonly latestOrderDetails = signal<ServiceOrderResponse | null>(null);
   readonly costBreakdownError = signal('');
+  readonly clientIdentificationNumber = signal('');
+  readonly paymentOrderId = signal<number | null>(null);
+  readonly paymentMethod = signal<PaymentMethod>('EFECTIVO');
+  readonly paymentLoadingOrderId = signal<number | null>(null);
+  readonly paymentError = signal('');
+  readonly paymentSuccessOrderId = signal<number | null>(null);
   readonly latestOrder = computed(() => this.historyItems()[0] ?? null);
   readonly partsSubtotal = computed(() => this.roundCurrency(
     (this.latestOrderDetails()?.parts ?? []).reduce((total, part) => total + part.quantity * part.unitPrice, 0)
@@ -83,11 +92,89 @@ export class ClientHomeComponent implements OnInit {
       return;
     }
     this.portal.vehicle.set(vehicle);
+    const identificationNumber = history.state.clientIdentificationNumber;
+    this.clientIdentificationNumber.set(
+      typeof identificationNumber === 'string' ? identificationNumber : ''
+    );
     this.loadHistory(vehicle.vehicleId);
   }
 
   selectTab(tab: ClientTab): void {
     this.activeTab.set(tab);
+  }
+
+  togglePayment(orderId: number): void {
+    this.paymentError.set('');
+    this.paymentSuccessOrderId.set(null);
+    this.paymentOrderId.update((currentId) => currentId === orderId ? null : orderId);
+    this.paymentMethod.set('EFECTIVO');
+  }
+
+  setPaymentMethod(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    if (value === 'EFECTIVO' || value === 'TRANSFERENCIA' ||
+        value === 'TARJETA_DEBITO' || value === 'TARJETA_CREDITO') {
+      this.paymentMethod.set(value);
+    }
+  }
+
+  paymentMethodLabel(method: PaymentMethod | null | undefined): string {
+    return method ? PAYMENT_METHOD_LABELS[method] : 'Sin registrar';
+  }
+
+  simulatePayment(item: ServiceHistoryItem): void {
+    const vehicle = this.vehicle();
+    if (!vehicle || !this.clientIdentificationNumber() ||
+        item.status !== 'LISTO' || item.paymentMethod || this.paymentLoadingOrderId() !== null) {
+      return;
+    }
+
+    this.paymentError.set('');
+    this.paymentLoadingOrderId.set(item.serviceOrderId);
+    this.portal.simulatePayment(item.serviceOrderId, {
+      plate: vehicle.plate,
+      identificationNumber: this.clientIdentificationNumber(),
+      paymentMethod: this.paymentMethod()
+    }).pipe(
+      timeout({ first: 30_000 }),
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.paymentLoadingOrderId.set(null))
+    ).subscribe({
+      next: (payment) => {
+        this.historyItems.update((items) => items.map((historyItem) =>
+          historyItem.serviceOrderId === payment.serviceOrderId
+            ? {
+                ...historyItem,
+                paymentMethod: payment.paymentMethod,
+                paymentRecordedAt: payment.paymentRecordedAt,
+                paymentAmount: payment.amount
+              }
+            : historyItem
+        ));
+        this.latestOrderDetails.update((order) => order?.id === payment.serviceOrderId
+          ? {
+              ...order,
+              paymentMethod: payment.paymentMethod,
+              paymentRecordedAt: payment.paymentRecordedAt,
+              paymentAmount: payment.amount
+            }
+          : order);
+        this.paymentSuccessOrderId.set(payment.serviceOrderId);
+        this.paymentOrderId.set(null);
+      },
+      error: (error: unknown) => {
+        console.error('Error registrando el medio de pago simulado:', error);
+        if (error instanceof TimeoutError) {
+          this.paymentError.set('No se recibió confirmación en 30 segundos. Actualiza el historial antes de volver a intentarlo para verificar si el pago quedó registrado.');
+        } else if (error instanceof HttpErrorResponse && error.status === 409) {
+          this.paymentError.set('El servicio ya no está disponible para pago o el pago ya fue registrado. Actualiza la página.');
+        } else if (error instanceof HttpErrorResponse && error.status === 404) {
+          this.paymentError.set('No se pudo validar la orden con los datos del vehículo. Vuelve a consultar el vehículo.');
+        } else {
+          this.paymentError.set('No se pudo registrar el pago simulado. Verifica tu conexión e inténtalo de nuevo.');
+        }
+      }
+    });
   }
 
   formatDate(date: string): string {

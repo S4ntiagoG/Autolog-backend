@@ -9,7 +9,7 @@
     <header class="dashboard-header">
       <div>
         <h1>Vista General</h1>
-        <p>Estado del taller en tiempo real</p>
+        <p>{{ isAdministratorDashboard ? 'Panel de administración del taller' : 'Estado del taller en tiempo real' }}</p>
       </div>
     </header>
 
@@ -63,11 +63,19 @@
               <article class="vehicle-row">
                 <div class="vehicle-row__identity">
                   <div class="vehicle-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M5 14.5L7 9.5H17L19 14.5M5 14.5V16.5H19V14.5M7 9.5V7.5H17V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                      <circle cx="8" cy="17" r="1.7" stroke="currentColor" stroke-width="1.8"/>
-                      <circle cx="16" cy="17" r="1.7" stroke="currentColor" stroke-width="1.8"/>
-                    </svg>
+                    @if (vehicle.photoFrontUrl) {
+                      <img
+                        [src]="vehicle.photoFrontUrl"
+                        [alt]="'Foto del frente de ' + vehicle.brand + ' ' + vehicle.model"
+                        (error)="onVehicleImageError(vehicle.id)"
+                      />
+                    } @else {
+                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 14.5L7 9.5H17L19 14.5M5 14.5V16.5H19V14.5M7 9.5V7.5H17V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="8" cy="17" r="1.7" stroke="currentColor" stroke-width="1.8"/>
+                        <circle cx="16" cy="17" r="1.7" stroke="currentColor" stroke-width="1.8"/>
+                      </svg>
+                    }
                   </div>
 
                   <div class="vehicle-meta">
@@ -77,6 +85,11 @@
                     <div class="vehicle-subline">
                       <span>VIN: {{ vehicle.id }}</span>
                     </div>
+                    @if (vehicle.paymentMethod) {
+                      <div class="vehicle-subline">
+                        <span>Pago: {{ paymentMethodLabel(vehicle.paymentMethod) }}</span>
+                      </div>
+                    }
                   </div>
                 </div>
 
@@ -103,15 +116,23 @@
         </div>
 
         <ul class="activity-list">
-          @for (item of recentActivity; track item.label) {
-            <li class="activity-item">
-              <span class="activity-dot activity-dot--{{ item.tone }}" aria-hidden="true"></span>
-              <div>
-                <time>{{ item.time }}</time>
-                <strong>{{ item.label }}</strong>
-                <p>{{ item.description }}</p>
-              </div>
-            </li>
+          @if (activityLoading()) {
+            <li class="activity-empty">Cargando actividad del taller…</li>
+          } @else if (activityError()) {
+            <li class="activity-empty" role="alert">{{ activityError() }}</li>
+          } @else if (recentActivity().length === 0) {
+            <li class="activity-empty">Aún no hay actividad registrada.</li>
+          } @else {
+            @for (item of recentActivity(); track item.id) {
+              <li class="activity-item">
+                <span class="activity-dot activity-dot--{{ item.tone }}" aria-hidden="true"></span>
+                <div>
+                  <time>{{ item.time }}</time>
+                  <strong>{{ item.label }}</strong>
+                  <p>{{ item.description }}</p>
+                </div>
+              </li>
+            }
           }
         </ul>
       </aside>

@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.autolog.backend.model.ServiceTask;
+import com.autolog.backend.model.PaymentMethod;
 
 public record ServiceHistoryItem(
         Long serviceOrderId,
@@ -17,5 +18,8 @@ public record ServiceHistoryItem(
         String status,
         LocalDateTime estimatedPickupAt,
         String progressNote,
-        List<ServiceTask> tasks) {
+        List<ServiceTask> tasks,
+        PaymentMethod paymentMethod,
+        LocalDateTime paymentRecordedAt,
+        BigDecimal paymentAmount) {
 }

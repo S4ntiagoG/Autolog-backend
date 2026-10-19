@@ -51,6 +51,45 @@ export interface ServiceHistoryItem {
   estimatedPickupAt: string | null;
   progressNote: string | null;
   tasks: ServiceTaskRequest[];
+  paymentMethod: PaymentMethod | null;
+  paymentRecordedAt: string | null;
+  paymentAmount: number | null;
+}
+
+export type PaymentMethod = 'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA_DEBITO' | 'TARJETA_CREDITO';
+
+export type WorkshopActivityType = 'VEHICLE_RECEIVED' | 'STATUS_CHANGED' | 'TASK_COMPLETED';
+
+export interface WorkshopActivityResponse {
+  id: number;
+  type: WorkshopActivityType;
+  occurredAt: string;
+  mechanicName: string;
+  vehicleBrand: string;
+  vehicleModel: string;
+  plate: string;
+  detail: string;
+  serviceOrderId: number;
+}
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  EFECTIVO: 'Efectivo',
+  TRANSFERENCIA: 'Transferencia',
+  TARJETA_DEBITO: 'Tarjeta débito',
+  TARJETA_CREDITO: 'Tarjeta crédito'
+};
+
+export interface SimulatedPaymentRequest {
+  plate: string;
+  identificationNumber: string;
+  paymentMethod: PaymentMethod;
+}
+
+export interface SimulatedPaymentResponse {
+  serviceOrderId: number;
+  paymentMethod: PaymentMethod;
+  paymentRecordedAt: string;
+  amount: number;
 }
 
 export interface ServiceOrderRequest {
@@ -61,6 +100,9 @@ export interface ServiceOrderRequest {
   serviceCost?: number | null;
   estimatedPickupAt?: string | null;
   progressNote?: string | null;
+  paymentMethod?: PaymentMethod | null;
+  paymentRecordedAt?: string | null;
+  paymentAmount?: number | null;
   mechanicDiagnosis?: string;
   status?: VehicleServiceStatus;
   tasks?: ServiceTaskRequest[];

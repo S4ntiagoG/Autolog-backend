@@ -210,6 +210,12 @@
           </div>
           <div class="invoice-tax-note">El IVA (19%) ya está incluido en los precios ingresados y no se suma al total.</div>
           <div class="total-line"><span>Total</span><strong>{{ formatCurrency(total()) }}</strong></div>
+          @if (order()?.paymentMethod; as paymentMethod) {
+            <div class="total-line">
+              <span>Medio de pago simulado</span>
+              <strong>{{ paymentMethodLabel(paymentMethod) }}</strong>
+            </div>
+          }
           <button type="button" class="primary-button" (click)="save()" [disabled]="saving()">
             {{ saving() ? 'Guardando…' : 'Guardar estado y cambios' }}
           </button>
@@ -278,6 +284,7 @@
           <div><dt>Mano de obra</dt><dd>{{ formatCurrency(laborSubtotal()) }}</dd></div>
           <div><dt>IVA incluido (19%)</dt><dd>{{ formatCurrency(includedVat()) }}</dd></div>
           <div><dt>Porcentaje de la factura en repuestos e insumos</dt><dd>{{ partsShare() | number:'1.0-2' }}%</dd></div>
+          <div><dt>Medio de pago</dt><dd>{{ paymentMethodLabel(order()?.paymentMethod) }}</dd></div>
           <div class="invoice-grand-total"><dt>Total</dt><dd>{{ formatCurrency(total()) }}</dd></div>
         </dl>
         <p class="invoice-iva-note">El IVA (19%) está incluido en los precios ingresados. El valor mostrado ya está dentro del total y no se adiciona por separado.</p>

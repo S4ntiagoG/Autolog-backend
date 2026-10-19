@@ -27,6 +27,6 @@ public class Mecanico {
     @Column(nullable = false)
     private String nombre;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String password;
 }

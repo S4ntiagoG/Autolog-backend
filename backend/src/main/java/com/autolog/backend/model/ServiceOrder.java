@@ -8,6 +8,8 @@ import java.util.List;
 
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.ElementCollection;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -58,6 +60,15 @@ public class ServiceOrder {
 
     @Column(length = 300)
     private String progressNote;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private PaymentMethod paymentMethod;
+
+    private LocalDateTime paymentRecordedAt;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal paymentAmount;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "service_order_tasks", joinColumns = @JoinColumn(name = "service_order_id"))

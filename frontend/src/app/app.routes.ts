@@ -1,4 +1,9 @@
 import { Routes } from '@angular/router';
+import {
+  administratorOnlyGuard,
+  mechanicAuthGuard,
+  mechanicDashboardGuard
+} from './features/mechanic-auth/mechanic-auth.guard';
 
 export const routes: Routes = [
   {
@@ -31,7 +36,16 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'mechanic/login',
+    title: 'AUTOLOG · Acceso del taller',
+    loadComponent: () =>
+      import('./features/mechanic-auth/mechanic-login.component').then(
+        ({ MechanicLoginComponent }) => MechanicLoginComponent
+      )
+  },
+  {
     path: '',
+    canActivate: [mechanicAuthGuard],
     loadComponent: () =>
       import('./layouts/mechanic-layout.component').then(
         ({ MechanicLayoutComponent }) => MechanicLayoutComponent
@@ -40,6 +54,17 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         title: 'AUTOLOG · Tablero',
+        canActivate: [mechanicDashboardGuard],
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.component').then(
+            ({ DashboardComponent }) => DashboardComponent
+          )
+      },
+      {
+        path: 'admin/dashboard',
+        title: 'AUTOLOG · Tablero de administración',
+        canActivate: [administratorOnlyGuard],
+        data: { administratorDashboard: true },
         loadComponent: () =>
           import('./features/dashboard/dashboard.component').then(
             ({ DashboardComponent }) => DashboardComponent
@@ -95,6 +120,44 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/vehicles/vehicle-list.component').then(
             ({ VehicleListComponent }) => VehicleListComponent
+          )
+      },
+      {
+        path: 'inventory',
+        title: 'AUTOLOG · Inventario',
+        data: {
+          moduleTitle: 'Inventario',
+          moduleDescription: 'La gestión de repuestos e insumos del taller estará disponible aquí.'
+        },
+        loadComponent: () =>
+          import('./features/workshop-placeholder/workshop-placeholder.component').then(
+            ({ WorkshopPlaceholderComponent }) => WorkshopPlaceholderComponent
+          )
+      },
+      {
+        path: 'mechanics',
+        title: 'AUTOLOG · Mecánicos',
+        canActivate: [administratorOnlyGuard],
+        data: {
+          moduleTitle: 'Mecánicos',
+          moduleDescription: 'La administración del personal mecánico estará disponible aquí.'
+        },
+        loadComponent: () =>
+          import('./features/workshop-placeholder/workshop-placeholder.component').then(
+            ({ WorkshopPlaceholderComponent }) => WorkshopPlaceholderComponent
+          )
+      },
+      {
+        path: 'settings',
+        title: 'AUTOLOG · Configuración',
+        canActivate: [administratorOnlyGuard],
+        data: {
+          moduleTitle: 'Configuración',
+          moduleDescription: 'Las preferencias y parámetros del taller estarán disponibles aquí.'
+        },
+        loadComponent: () =>
+          import('./features/workshop-placeholder/workshop-placeholder.component').then(
+            ({ WorkshopPlaceholderComponent }) => WorkshopPlaceholderComponent
           )
       },
       {

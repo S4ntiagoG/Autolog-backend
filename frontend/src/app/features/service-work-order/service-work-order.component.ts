@@ -7,6 +7,8 @@ import {
   ServiceLaborRequest,
   ServiceOrderRequest,
   ServiceOrderResponse,
+  PaymentMethod,
+  PAYMENT_METHOD_LABELS,
   ServicePartRequest,
   ServiceTaskRequest,
   VehicleResponse,
@@ -263,6 +265,10 @@ export class ServiceWorkOrderComponent implements OnInit {
       currency: 'COP',
       maximumFractionDigits: 0
     }).format(amount);
+  }
+
+  paymentMethodLabel(method: PaymentMethod | null | undefined): string {
+    return method ? PAYMENT_METHOD_LABELS[method] : 'Sin registrar';
   }
 
   orderNumber(): string {

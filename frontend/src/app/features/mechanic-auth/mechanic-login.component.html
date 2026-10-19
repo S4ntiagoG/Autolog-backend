@@ -1,0 +1,93 @@
+<main class="flex min-h-dvh items-center justify-center bg-[#111113] px-4 py-8 text-neutral-100">
+  <section class="w-full max-w-sm overflow-hidden rounded-md border border-neutral-800 bg-[#1e1e20] shadow-2xl shadow-black/40">
+    <header class="flex min-h-28 items-center justify-center border-b border-neutral-800 bg-[#151517] px-6 py-5">
+      <img class="brand-mark" src="/ciclo-motor-la-villa.jpeg" alt="Ciclo Motor La Villa" />
+    </header>
+
+    <div class="p-6 sm:p-7">
+      <p class="text-[10px] font-semibold uppercase text-neutral-400">Power by</p>
+      <h1 class="mt-1 text-3xl font-extrabold leading-none text-[#D32F2F]">AUTOLOG</h1>
+
+      <form class="mt-7 space-y-5" [formGroup]="form" (ngSubmit)="login()" novalidate>
+        <div>
+          <label for="codigoMecanico" class="mb-1.5 block text-[10px] font-semibold uppercase text-neutral-300">Usuario o código de acceso</label>
+          <input
+            id="codigoMecanico"
+            type="text"
+            formControlName="codigoMecanico"
+            autocomplete="username"
+            maxlength="100"
+            placeholder="Ej. MEC-001 o usuario de administrador"
+            required
+            class="w-full rounded-sm border border-neutral-600 bg-neutral-50 px-3 py-3 text-sm text-neutral-900 placeholder-neutral-500 focus:border-red-600 focus:outline-none focus:ring-1 focus:ring-red-600"
+            [class.border-red-500]="showError('codigoMecanico')"
+            [attr.aria-invalid]="showError('codigoMecanico')"
+            aria-describedby="username-error"
+          />
+          @if (showError('codigoMecanico')) {
+            <p id="username-error" class="mt-1 text-xs text-red-300">Ingresa tu usuario.</p>
+          }
+        </div>
+
+        <div>
+          <label for="password" class="mb-1.5 block text-[10px] font-semibold uppercase text-neutral-300">Contraseña</label>
+          <div class="relative">
+            <input
+              id="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="current-password"
+              maxlength="72"
+              placeholder="Ingresa tu contraseña"
+              required
+              class="w-full rounded-sm border border-neutral-600 bg-neutral-50 px-3 py-3 pr-12 text-sm text-neutral-900 placeholder-neutral-500 focus:border-red-600 focus:outline-none focus:ring-1 focus:ring-red-600"
+              [class.border-red-500]="showError('password')"
+              [attr.aria-invalid]="showError('password')"
+              aria-describedby="password-error"
+            />
+            <button
+              type="button"
+              class="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-sm text-neutral-500 hover:bg-neutral-200 hover:text-neutral-800 focus:outline-none focus:ring-2 focus:ring-red-600"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              [attr.aria-pressed]="showPassword()"
+            >
+              @if (showPassword()) {
+                <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 3l18 18" />
+                  <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+                  <path d="M9.9 5.2A11 11 0 0 1 12 5c5 0 8.3 4.5 9 6-.3.7-1.2 2-2.6 3.2" />
+                  <path d="M6.2 6.2C4.4 7.4 3.3 9.1 3 11c.7 1.5 4 6 9 6 1 0 1.9-.2 2.7-.5" />
+                </svg>
+              } @else {
+                <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 12s3.3-7 9-7 9 7 9 7-3.3 7-9 7-9-7-9-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              }
+            </button>
+          </div>
+          @if (showError('password')) {
+            <p id="password-error" class="mt-1 text-xs text-red-300">Ingresa tu contraseña.</p>
+          }
+        </div>
+
+        @if (error()) {
+          <p role="alert" class="rounded-sm border border-red-900 bg-red-950/60 p-3 text-xs leading-relaxed text-red-200">{{ error() }}</p>
+        }
+
+        <button
+          type="submit"
+          [disabled]="loading()"
+          class="mt-7 flex min-h-11 w-full items-center justify-center rounded-sm bg-[#D32F2F] px-4 py-3 text-[11px] font-bold uppercase text-white transition hover:bg-[#b71c1c] disabled:cursor-wait disabled:opacity-60"
+        >
+          @if (loading()) { Validando acceso… } @else { Ingresar al taller }
+        </button>
+      </form>
+
+      <a routerLink="/client/search" class="mt-5 block text-center text-xs text-neutral-400 underline decoration-neutral-600 underline-offset-4 hover:text-white">
+        Volver a consulta de clientes
+      </a>
+    </div>
+  </section>
+</main>

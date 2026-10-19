@@ -2,7 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
-import { ClientVehicleHomeResponse, ServiceOrderResponse } from '../../../core/models/api.models';
+import {
+  ClientVehicleHomeResponse,
+  PaymentMethod,
+  PAYMENT_METHOD_LABELS,
+  ServiceOrderResponse
+} from '../../../core/models/api.models';
 import { ClientPortalService } from '../client-portal/client-portal.service';
 
 interface EvidenceImage {
@@ -122,6 +127,10 @@ export class ClientServiceOrderDetailComponent implements OnInit {
       currency: 'COP',
       maximumFractionDigits: 0
     }).format(amount);
+  }
+
+  paymentMethodLabel(method: PaymentMethod | null | undefined): string {
+    return method ? PAYMENT_METHOD_LABELS[method] : 'Sin registrar';
   }
 
   orderNumber(id: number): string {

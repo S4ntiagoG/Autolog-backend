@@ -1,3 +1,5 @@
+import { PaymentMethod } from '../../../core/models/api.models';
+
 export type VehicleStatus = 'LISTO' | 'EN PROGRESO' | 'PENDIENTE';
 
 export interface MechanicVehicleItem {
@@ -11,5 +13,6 @@ export interface MechanicVehicleItem {
   ownerName: string;
   lastServiceDate: string; // Formato DD/MM/YYYY o '-- / -- / ----'
   status: VehicleStatus;
+  photoFrontUrl?: string | null;
+  paymentMethod?: PaymentMethod | null;
 }
-

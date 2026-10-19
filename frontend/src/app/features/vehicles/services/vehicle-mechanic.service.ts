@@ -3,7 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { catchError, forkJoin, map, Observable, of } from 'rxjs';
 
 import { API_CONFIG } from '../../../core/config/api.config';
-import { ServiceOrderRequest, ServiceOrderResponse, VehicleResponse } from '../../../core/models/api.models';
+import {
+  ServiceOrderRequest,
+  ServiceOrderResponse,
+  VehicleResponse,
+  WorkshopActivityResponse
+} from '../../../core/models/api.models';
 import { MechanicVehicleItem, VehicleStatus } from '../models/vehicle-mechanic.models';
 
 @Injectable({ providedIn: 'root' })
@@ -40,10 +45,18 @@ export class VehicleMechanicService {
 
           // Si el vehículo tiene orden de servicio, asigna estado según antigüedad o estado activo
           const status: VehicleStatus = latestOrder?.status ?? 'PENDIENTE';
+          const evidencePathPrefix = latestOrder ? `service-orders/${latestOrder.id}/` : '';
+          const hasStoredFrontEvidence = Boolean(
+            latestOrder?.photoFront?.startsWith(evidencePathPrefix)
+          );
 
           return {
             id: v.id,
             serviceOrderId: latestOrder?.id ?? null,
+            photoFrontUrl: latestOrder && hasStoredFrontEvidence
+              ? `${this.baseUrl}${API_CONFIG.serviceOrdersPath}/${latestOrder.id}/evidence/front`
+              : null,
+            paymentMethod: latestOrder?.paymentMethod ?? null,
             plate: v.plate,
             brand: v.brand,
             model: v.model,
@@ -69,10 +82,17 @@ export class VehicleMechanicService {
     return this.http.get<ServiceOrderResponse[]>(`${this.baseUrl}${API_CONFIG.serviceOrdersPath}`);
   }
 
+  getRecentActivity(): Observable<WorkshopActivityResponse[]> {
+    return this.http.get<WorkshopActivityResponse[]>(
+      `${this.baseUrl}${API_CONFIG.mechanicActivityPath}`
+    );
+  }
+
   saveServiceOrder(orderId: number | null, request: ServiceOrderRequest): Observable<ServiceOrderResponse> {
     const url = `${this.baseUrl}${API_CONFIG.serviceOrdersPath}`;
     return orderId === null
       ? this.http.post<ServiceOrderResponse>(url, request)
       : this.http.put<ServiceOrderResponse>(`${url}/${orderId}`, request);
   }
+
 }

@@ -1,0 +1,33 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "AutoLog: Backend (Spring Boot)",
+			"type": "shell",
+			"command": ".\\backend\\gradlew.bat",
+			"args": [
+				"-p",
+				"backend",
+				"bootRun",
+				"--args=--server.port=8080"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "AutoLog: Frontend (Angular)",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"frontend",
+				"start",
+				"--",
+				"--host",
+				"127.0.0.1"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}

@@ -1,0 +1,49 @@
+.module-page {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: 2rem;
+  background: #111;
+  color: #f5f5f5;
+}
+
+.module-card {
+  width: min(100%, 34rem);
+  border: 1px solid #34343a;
+  background: #1b1b1e;
+  padding: 2rem;
+}
+
+.module-eyebrow {
+  color: #a1a1aa;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+}
+
+.module-card h1 {
+  margin: 0.75rem 0 0.5rem;
+  font-size: 1.8rem;
+}
+
+.module-card p {
+  color: #a1a1aa;
+  line-height: 1.6;
+}
+
+.module-status {
+  display: inline-block;
+  margin-top: 0.5rem;
+  border: 1px solid #713f12;
+  background: #451a03;
+  padding: 0.3rem 0.6rem;
+  color: #fbbf24;
+  font-size: 0.75rem;
+}
+
+.module-card a {
+  display: block;
+  width: fit-content;
+  margin-top: 1.5rem;
+  color: #fca5a5;
+  font-size: 0.85rem;
+}

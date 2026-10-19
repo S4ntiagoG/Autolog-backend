@@ -5,6 +5,8 @@ import { Observable } from 'rxjs';
 import { API_CONFIG } from '../../../core/config/api.config';
 import {
   ClientVehicleHomeResponse,
+  SimulatedPaymentRequest,
+  SimulatedPaymentResponse,
   ServiceHistoryItem,
   ServiceOrderResponse,
   VehicleLookupRequest
@@ -33,6 +35,13 @@ export class ClientPortalService {
   getServiceOrder(orderId: number): Observable<ServiceOrderResponse> {
     return this.http.get<ServiceOrderResponse>(
       `${this.baseUrl}${API_CONFIG.serviceOrdersPath}/${orderId}`
+    );
+  }
+
+  simulatePayment(orderId: number, request: SimulatedPaymentRequest): Observable<SimulatedPaymentResponse> {
+    return this.http.post<SimulatedPaymentResponse>(
+      `${this.baseUrl}${API_CONFIG.serviceOrdersPath}/${orderId}/simulate-payment`,
+      request
     );
   }
 }

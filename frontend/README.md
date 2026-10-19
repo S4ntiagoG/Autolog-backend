@@ -83,11 +83,17 @@ Después de crear la orden, el frontend envía los archivos seleccionados como `
 
 El detalle usa el estado guardado en la orden (`PENDIENTE`, `EN PROGRESO` o `LISTO`). Si una orden antigua no tiene imágenes almacenadas, se indica que no se cargó evidencia para ese ingreso.
 
+En el historial del cliente, una orden lista para entrega y con total permite seleccionar efectivo, transferencia, tarjeta débito o tarjeta crédito y registrar un pago simulado. No se realiza ningún cobro real. El medio y la fecha registrados también se muestran en el detalle del cliente y en la orden de trabajo/tablero mecánico.
+
+El pago simulado solo se habilita cuando la orden está `LISTO` y tiene un total positivo. Registrar el pago guarda el medio, la fecha y el importe, pero no cambia el estado (permanece `LISTO`) ni añade un evento al log general del taller. Una vez pagada, la orden no se puede editar ni eliminar y no admite nuevas evidencias fotográficas.
+
 La vista del detalle incluye navegación de regreso al portal, estado resaltado por color, placa con el estilo compartido de las vistas de vehículos, número de orden legible y tareas presentadas como lista. La acción de factura utiliza la vista de impresión del navegador; esta genera una impresión/PDF del detalle y no crea ni descarga un archivo PDF en el servidor.
 
 ### Orden de trabajo mecánico
 
 Desde la vista de vehículos o el tablero mecánico se accede a `service-orders/vehicle/{vehicleId}/work`. Allí se puede actualizar el estado y guardar las tareas con su condición de completadas, repuestos e insumos con cantidades y precio unitario, y mano de obra con horas y tarifa. El diagnóstico, kilometraje y observaciones iniciales son de solo lectura en esta vista; se editan desde el ingreso del vehículo.
+
+El tablero muestra un registro persistente de actividad reciente del taller: ingresos de vehículos, cambios de estado y tareas completadas, con hora y nombre del mecánico que guardó la acción. Las tareas se registran en el log cuando el mecánico guarda los cambios de la orden. Los pagos simulados no generan eventos en ese registro.
 
 En esta orden de trabajo el mecánico puede indicar la hora estimada de recogida y escribir una actualización de hasta 300 caracteres para el cliente (por ejemplo, que el taller está esperando repuestos). La línea de tiempo refleja `PENDIENTE`, `EN PROGRESO` y `LISTO`; la actualización aparece asociada a la etapa activa. Completar todas las tareas muestra una indicación para que el mecánico confirme manualmente `LISTO`. No se puede marcar la orden como lista mientras haya tareas pendientes; si se agrega o desmarca una tarea cuando ya estaba lista, la orden vuelve a `EN PROGRESO`.
 
@@ -181,6 +187,8 @@ El proxy de Angular reenvía las solicitudes `/api` a `http://localhost:8080`.
 | GET | `/api/service-orders/{id}` | Consulta una orden por ID |
 | GET | `/api/service-orders/vehicle/{vehicleId}` | Consulta el historial del vehículo |
 | POST | `/api/vehicles/search` | Busca un vehículo por placa y documento |
+| POST | `/api/service-orders/{id}/simulate-payment` | Registra un medio de pago simulado del cliente |
+| POST | `/api/mechanics/auth/login` | Inicia sesión de mecánico; usa sesión protegida con CSRF |
 
 ## Rutas del frontend
 
@@ -192,13 +200,21 @@ La aplicación Angular define estas vistas principales en la configuración de r
 | `/service-orders/:id/edit` | Edición de una orden de servicio existente |
 | `/vehicles` | Lista general de vehículos registrados |
 | `/mechanic/vehicles` | Acceso alternativo al listado del mecánico |
+| `/dashboard` | Tablero del mecánico |
+| `/admin/dashboard` | Tablero del administrador |
+| `/inventory` | Inventario del taller (página informativa mientras se implementa el módulo) |
+| `/mechanics` | Administración de mecánicos (solo administrador; página informativa) |
+| `/settings` | Configuración (solo administrador; página informativa) |
 | `/client/search` | Consulta de vehículo para el cliente |
 | `/client/home` | Portal del cliente e historial de mantenimientos |
 | `/client/service-orders/:id` | Detalle del servicio para el cliente, evidencia y vista de impresión |
+| `/mechanic/login` | Acceso de mecánicos y administradores con usuario y contraseña |
 | `/service-orders/vehicle/:vehicleId/work` | Orden de trabajo mecánico |
 | `**` | Redirige a `/client/search` cuando la ruta no existe |
 
-Estas rutas se configuran en `src/app/app.routes.ts` y la aplicación inicia en la búsqueda del vehículo del portal cliente.
+Estas rutas se configuran en `src/app/app.routes.ts`. Las rutas del taller requieren una sesión válida. El formulario compartido `/mechanic/login` acepta una cuenta existente de `mecanicos` o `admins` y dirige a cada rol a su tablero según el rol devuelto por la API. La creación de cuentas sigue fuera del alcance: el usuario administrador debe existir previamente en la tabla `admins`. La consulta `/client/search` es solo para clientes y permanece fuera de la navegación del taller.
+
+El menú lateral depende del rol: el mecánico ve únicamente Tablero, Vehículos e Inventario; el administrador ve además Mecánicos y Configuración. Inventario, Mecánicos y Configuración muestran por ahora una página informativa porque esos módulos todavía no tienen implementación funcional. Las rutas de Mecánicos y Configuración también redirigen al tablero si las intenta abrir un mecánico. El cierre de sesión y el acceso usan la cookie de sesión del backend, compartida entre pestañas del mismo perfil de navegador: cerrar sesión o iniciar con otra cuenta afecta a las demás pestañas.
 
 ## Historial y costos
 

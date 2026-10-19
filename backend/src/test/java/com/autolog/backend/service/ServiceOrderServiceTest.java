@@ -24,14 +24,19 @@ import com.autolog.backend.model.ServiceOrder;
 import com.autolog.backend.model.ServiceLabor;
 import com.autolog.backend.model.ServicePart;
 import com.autolog.backend.model.ServiceTask;
+import com.autolog.backend.model.PaymentMethod;
 import com.autolog.backend.model.Vehicle;
 import com.autolog.backend.repository.ServiceOrderRepository;
+import com.autolog.backend.service.WorkshopActivityService;
 
 @ExtendWith(MockitoExtension.class)
 class ServiceOrderServiceTest {
 
     @Mock
     private ServiceOrderRepository serviceOrderRepository;
+
+    @Mock
+    private WorkshopActivityService activityService;
 
     @InjectMocks
     private ServiceOrderService serviceOrderService;
@@ -117,6 +122,9 @@ class ServiceOrderServiceTest {
         order.setServiceCost(new BigDecimal("31.50"));
         order.setEstimatedPickupAt(estimatedPickupAt);
         order.setProgressNote("Esperando repuestos");
+        order.setPaymentMethod(PaymentMethod.TRANSFERENCIA);
+        order.setPaymentRecordedAt(LocalDateTime.of(2026, 10, 14, 10, 0));
+        order.setPaymentAmount(new BigDecimal("30.00"));
         ServicePart part = new ServicePart();
         part.setQuantity(1);
         part.setUnitPrice(new BigDecimal("10.00"));
@@ -144,5 +152,8 @@ class ServiceOrderServiceTest {
         assertEquals(List.of(true, false),
                 history.get(0).tasks().stream().map(ServiceTask::isCompleted).toList());
         assertEquals(new BigDecimal("30.00"), history.get(0).serviceCost());
+        assertEquals(PaymentMethod.TRANSFERENCIA, history.get(0).paymentMethod());
+        assertEquals(LocalDateTime.of(2026, 10, 14, 10, 0), history.get(0).paymentRecordedAt());
+        assertEquals(new BigDecimal("30.00"), history.get(0).paymentAmount());
     }
 }

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { colombianPlateValidator } from '../../../core/colombian-plate.validator';
 import { ClientPortalService } from '../client-portal/client-portal.service';
@@ -10,7 +10,7 @@ import { ClientPortalService } from '../client-portal/client-portal.service';
 @Component({
   selector: 'app-client-vehicle-search',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './client-vehicle-search.component.html',
   styleUrl: './client-vehicle-search.component.css'
 })
@@ -25,7 +25,7 @@ export class ClientVehicleSearchComponent {
 
   readonly form = this.fb.nonNullable.group({
     plate: ['', [Validators.required, colombianPlateValidator]],
-    identificationNumber: ['', [Validators.required, Validators.pattern(/\S+/)]]
+    identificationNumber: ['', [Validators.required, Validators.pattern(/\S+/), Validators.maxLength(100)]]
   });
 
   search(): void {
@@ -37,11 +37,22 @@ export class ClientVehicleSearchComponent {
     }
 
     this.loading.set(true);
-    this.portal.searchVehicle(this.form.getRawValue()).subscribe({
+    const rawRequest = this.form.getRawValue();
+    const request = {
+      ...rawRequest,
+      plate: rawRequest.plate.trim().toUpperCase(),
+      identificationNumber: rawRequest.identificationNumber.trim()
+    };
+    this.portal.searchVehicle(request).subscribe({
       next: (vehicle) => {
         this.portal.vehicle.set(vehicle);
         this.loading.set(false);
-        void this.router.navigate(['/client/home'], { state: { clientVehicle: vehicle } });
+        void this.router.navigate(['/client/home'], {
+          state: {
+            clientVehicle: vehicle,
+            clientIdentificationNumber: request.identificationNumber.trim()
+          }
+        });
       },
       error: (requestError: unknown) => {
         this.loading.set(false);

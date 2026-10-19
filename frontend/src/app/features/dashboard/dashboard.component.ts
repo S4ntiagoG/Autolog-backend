@@ -1,15 +1,22 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { RouterLink } from '@angular/router';
 
+import {
+  PaymentMethod,
+  PAYMENT_METHOD_LABELS,
+  WorkshopActivityResponse
+} from '../../core/models/api.models';
 import { MechanicVehicleItem, VehicleStatus } from '../vehicles/models/vehicle-mechanic.models';
 import { VehicleMechanicService } from '../vehicles/services/vehicle-mechanic.service';
 
 interface ActivityItem {
+  id: number;
   time: string;
   label: string;
   description: string;
-  tone: 'red' | 'yellow' | 'green' | 'orange';
+  tone: 'red' | 'yellow' | 'green' | 'orange' | 'blue';
 }
 
 @Component({
@@ -21,10 +28,14 @@ interface ActivityItem {
 })
 export class DashboardComponent implements OnInit {
   private readonly mechanicService = inject(VehicleMechanicService);
+  private readonly route = inject(ActivatedRoute);
+  readonly isAdministratorDashboard = this.route.snapshot.data['administratorDashboard'] === true;
 
   readonly vehicles = signal<MechanicVehicleItem[]>([]);
   readonly loading = signal(true);
+  readonly activityLoading = signal(true);
   readonly error = signal('');
+  readonly activityError = signal('');
 
   readonly stats = computed(() => {
     const list = this.vehicles();
@@ -37,32 +48,7 @@ export class DashboardComponent implements OnInit {
 
   readonly visibleVehicles = computed(() => this.vehicles().slice(0, 4));
 
-  readonly recentActivity: ActivityItem[] = [
-    {
-      time: '19:45 AM',
-      label: 'Diagnóstico Finalizado',
-      description: 'BMW M3 - Transmission issue identified. Quote generated.',
-      tone: 'red'
-    },
-    {
-      time: '09:30 AM',
-      label: 'Servicio Listo',
-      description: 'Ford Transit - Oil change complete. Ready for pickup.',
-      tone: 'green'
-    },
-    {
-      time: '08:15 AM',
-      label: 'Piezas Pendientes',
-      description: 'Audi Q5 - Brake pads ordered from main supplier. ETA: 2PM.',
-      tone: 'yellow'
-    },
-    {
-      time: '07:30 AM',
-      label: 'Workshop Opened',
-      description: 'System initialized. Daily sync complete.',
-      tone: 'orange'
-    }
-  ];
+  readonly recentActivity = signal<ActivityItem[]>([]);
 
   ngOnInit(): void {
     this.loadDashboard();
@@ -73,17 +59,54 @@ export class DashboardComponent implements OnInit {
     this.error.set('');
 
     this.mechanicService.getMechanicVehicles().subscribe({
-      next: (data) => {
-        this.vehicles.set(data);
+      next: (vehicles) => {
+        this.vehicles.set(vehicles);
         this.loading.set(false);
       },
       error: (err) => {
-        console.error('Error cargando tablero:', err);
+        console.error('Error cargando el tablero:', err);
         this.error.set('No se pudo sincronizar el tablero con el backend. Asegúrate de que Spring Boot esté ejecutándose.');
-        this.vehicles.set([]);
         this.loading.set(false);
       }
     });
+
+    this.mechanicService.getRecentActivity().subscribe({
+      next: (activity) => {
+        this.recentActivity.set(activity.map((item) => this.toActivityItem(item)));
+        this.activityLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error cargando la actividad del taller:', err);
+        this.activityError.set('No se pudo cargar la actividad reciente. Intenta actualizar el tablero.');
+        this.activityLoading.set(false);
+      }
+    });
+  }
+
+  private toActivityItem(item: WorkshopActivityResponse): ActivityItem {
+    const labels: Record<WorkshopActivityResponse['type'], string> = {
+      VEHICLE_RECEIVED: 'Vehículo ingresado',
+      STATUS_CHANGED: 'Estado actualizado',
+      TASK_COMPLETED: 'Trabajo completado'
+    };
+    const tones: Record<WorkshopActivityResponse['type'], ActivityItem['tone']> = {
+      VEHICLE_RECEIVED: 'blue',
+      STATUS_CHANGED: 'yellow',
+      TASK_COMPLETED: 'green'
+    };
+    const time = new Intl.DateTimeFormat('es-CO', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }).format(new Date(item.occurredAt));
+
+    return {
+      id: item.id,
+      time,
+      label: labels[item.type],
+      description: `${item.vehicleBrand} ${item.vehicleModel} (${item.plate}) · ${item.detail} · ${item.mechanicName}`,
+      tone: tones[item.type]
+    };
   }
 
   getVehicleServiceLabel(vehicle: MechanicVehicleItem): string {
@@ -105,5 +128,15 @@ export class DashboardComponent implements OnInit {
     };
 
     return classes[status];
+  }
+
+  paymentMethodLabel(method: PaymentMethod): string {
+    return PAYMENT_METHOD_LABELS[method];
+  }
+
+  onVehicleImageError(vehicleId: number): void {
+    this.vehicles.update((vehicles) => vehicles.map((vehicle) =>
+      vehicle.id === vehicleId ? { ...vehicle, photoFrontUrl: null } : vehicle
+    ));
   }
 }

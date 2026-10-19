@@ -10,22 +10,28 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 import com.autolog.backend.dto.ServiceHistoryItem;
+import com.autolog.backend.dto.SimulatedPaymentRequest;
+import com.autolog.backend.dto.SimulatedPaymentResponse;
 import com.autolog.backend.model.ServiceOrder;
+import com.autolog.backend.model.ServiceTask;
 import com.autolog.backend.model.Vehicle;
+import com.autolog.backend.security.MecanicoPrincipal;
 import com.autolog.backend.repository.VehicleRepository;
 import com.autolog.backend.service.ServiceOrderEvidenceService;
 import com.autolog.backend.service.ServiceOrderService;
@@ -46,6 +52,14 @@ public class ServiceOrderController {
         this.serviceOrderService = serviceOrderService;
         this.vehicleRepository = vehicleRepository;
         this.evidenceService = evidenceService;
+    }
+
+    @PostMapping("/{id}/simulate-payment")
+    public ResponseEntity<SimulatedPaymentResponse> simulatePayment(
+            @PathVariable Long id,
+            @Valid @RequestBody SimulatedPaymentRequest request) {
+        return ResponseEntity.ok(serviceOrderService.recordSimulatedPayment(
+                id, request.plate(), request.identificationNumber(), request.paymentMethod()));
     }
 
     // 1. Listar todas las órdenes de servicio del taller
@@ -73,6 +87,10 @@ public class ServiceOrderController {
             @RequestParam(value = "photoExtra", required = false) MultipartFile photoExtra) {
         return serviceOrderService.getServiceOrderById(id)
                 .map(order -> {
+                    if (order.getPaymentMethod() != null) {
+                        throw new org.springframework.web.server.ResponseStatusException(
+                                HttpStatus.CONFLICT, "No se puede modificar una orden pagada.");
+                    }
                     Map<String, MultipartFile> files = new LinkedHashMap<>();
                     files.put("front", photoFront);
                     files.put("right-side", photoRightSide);
@@ -124,7 +142,9 @@ public class ServiceOrderController {
 
     // 3. Registrar una nueva entrada / orden de servicio (Recepción del vehículo)
     @PostMapping
-    public ResponseEntity<ServiceOrder> createServiceOrder(@RequestBody ServiceOrder serviceOrder) {
+    public ResponseEntity<ServiceOrder> createServiceOrder(
+            @RequestBody ServiceOrder serviceOrder,
+            @AuthenticationPrincipal MecanicoPrincipal mechanic) {
         // Validar que el vehículo exista antes de crear la orden
         if (serviceOrder.getVehicle() == null || serviceOrder.getVehicle().getId() == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
@@ -138,15 +158,29 @@ public class ServiceOrderController {
         }
 
         serviceOrder.setVehicle(vehicle);
-        ServiceOrder savedOrder = serviceOrderService.saveServiceOrder(serviceOrder);
+        ServiceOrder savedOrder = serviceOrderService.registerVehicleEntry(serviceOrder, mechanic.getNombre());
         return new ResponseEntity<>(savedOrder, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ServiceOrder> updateServiceOrder(@PathVariable Long id,
-            @RequestBody ServiceOrder serviceOrder) {
+            @RequestBody ServiceOrder serviceOrder,
+            @AuthenticationPrincipal MecanicoPrincipal mechanic) {
         return serviceOrderService.getServiceOrderById(id)
                 .map(existing -> {
+                    if (existing.getPaymentMethod() != null) {
+                        throw new org.springframework.web.server.ResponseStatusException(
+                                HttpStatus.CONFLICT, "Una orden pagada no puede modificarse.");
+                    }
+                    String previousStatus = existing.getStatus();
+                    List<ServiceTask> previousTasks = existing.getTasks() == null
+                            ? List.of()
+                            : existing.getTasks().stream().map(task -> {
+                                ServiceTask copy = new ServiceTask();
+                                copy.setDescription(task.getDescription());
+                                copy.setCompleted(task.isCompleted());
+                                return copy;
+                            }).toList();
                     existing.setEntryDate(LocalDate.now());
                     existing.setPrimaryReason(serviceOrder.getPrimaryReason());
                     existing.setCurrentMileage(serviceOrder.getCurrentMileage());
@@ -171,7 +205,8 @@ public class ServiceOrderController {
                     }
                     existing.setEstimatedPickupAt(serviceOrder.getEstimatedPickupAt());
                     existing.setProgressNote(serviceOrder.getProgressNote());
-                    return ResponseEntity.ok(serviceOrderService.saveServiceOrder(existing));
+                    return ResponseEntity.ok(serviceOrderService.saveWorkOrder(
+                            existing, previousStatus, previousTasks, mechanic.getNombre()));
                 })
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
@@ -179,10 +214,14 @@ public class ServiceOrderController {
     // 4. Eliminar una orden de servicio
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteServiceOrder(@PathVariable Long id) {
-        if (serviceOrderService.getServiceOrderById(id).isPresent()) {
-            serviceOrderService.deleteServiceOrder(id);
-            return ResponseEntity.noContent().build();
+        ServiceOrder order = serviceOrderService.getServiceOrderById(id).orElse(null);
+        if (order == null) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        if (order.getPaymentMethod() != null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        serviceOrderService.deleteServiceOrder(id);
+        return ResponseEntity.noContent().build();
     }
 }

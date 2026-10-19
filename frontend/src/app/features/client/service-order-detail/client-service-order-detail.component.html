@@ -147,6 +147,10 @@
               <div><dt>Mano de obra</dt><dd>{{ formatCurrency(laborSubtotal()) }}</dd></div>
               <div><dt>Repuestos e insumos</dt><dd>{{ formatCurrency(partsSubtotal()) }}</dd></div>
               <div><dt>IVA incluido (19%)</dt><dd>{{ formatCurrency(includedVat()) }}</dd></div>
+              <div>
+                <dt>Medio de pago</dt>
+                <dd>{{ paymentMethodLabel(serviceOrder.paymentMethod) }}</dd>
+              </div>
               <div class="parts-share-line">
                 <dt>Participación de repuestos e insumos</dt>
                 <dd>{{ partsShare() | number:'1.0-2' }}%</dd>
