@@ -62,9 +62,19 @@ public class MechanicSecurityConfig {
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/mechanics/auth/csrf", "/api/mechanics/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/workshop-settings")
+                        .hasRole("ADMIN")
                         .requestMatchers("/api/mechanics/auth/me", "/api/mechanics/auth/logout",
                                 "/api/mechanics/activity")
                         .hasAnyRole("MECHANIC", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/mechanics", "/api/mechanics/*")
+                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/mechanics")
+                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/mechanics/*")
+                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/mechanics/*")
+                        .hasRole("ADMIN")
                         .requestMatchers("/api/mechanics/**").hasRole("MECHANIC")
                         .requestMatchers(HttpMethod.GET,
                                 "/api/service-orders/*",

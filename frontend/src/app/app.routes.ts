@@ -136,28 +136,39 @@ export const routes: Routes = [
       },
       {
         path: 'mechanics',
+        pathMatch: 'full',
         title: 'AUTOLOG · Mecánicos',
         canActivate: [administratorOnlyGuard],
-        data: {
-          moduleTitle: 'Mecánicos',
-          moduleDescription: 'La administración del personal mecánico estará disponible aquí.'
-        },
         loadComponent: () =>
-          import('./features/workshop-placeholder/workshop-placeholder.component').then(
-            ({ WorkshopPlaceholderComponent }) => WorkshopPlaceholderComponent
+          import('./features/mechanics/mechanics.component').then(
+            ({ MechanicsComponent }) => MechanicsComponent
+          )
+      },
+      {
+        path: 'mechanics/new',
+        title: 'AUTOLOG · Añadir mecánico',
+        canActivate: [administratorOnlyGuard],
+        loadComponent: () =>
+          import('./features/mechanics/mechanic-form.component').then(
+            ({ MechanicFormComponent }) => MechanicFormComponent
+          )
+      },
+      {
+        path: 'mechanics/:id/edit',
+        title: 'AUTOLOG · Editar mecánico',
+        canActivate: [administratorOnlyGuard],
+        loadComponent: () =>
+          import('./features/mechanics/mechanic-form.component').then(
+            ({ MechanicFormComponent }) => MechanicFormComponent
           )
       },
       {
         path: 'settings',
         title: 'AUTOLOG · Configuración',
         canActivate: [administratorOnlyGuard],
-        data: {
-          moduleTitle: 'Configuración',
-          moduleDescription: 'Las preferencias y parámetros del taller estarán disponibles aquí.'
-        },
         loadComponent: () =>
-          import('./features/workshop-placeholder/workshop-placeholder.component').then(
-            ({ WorkshopPlaceholderComponent }) => WorkshopPlaceholderComponent
+          import('./features/settings/workshop-settings.component').then(
+            ({ WorkshopSettingsComponent }) => WorkshopSettingsComponent
           )
       },
       {

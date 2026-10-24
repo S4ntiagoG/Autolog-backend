@@ -31,6 +31,7 @@ import com.autolog.backend.dto.SimulatedPaymentResponse;
 import com.autolog.backend.model.ServiceOrder;
 import com.autolog.backend.model.ServiceTask;
 import com.autolog.backend.model.Vehicle;
+import com.autolog.backend.repository.MecanicoRepository;
 import com.autolog.backend.security.MecanicoPrincipal;
 import com.autolog.backend.repository.VehicleRepository;
 import com.autolog.backend.service.ServiceOrderEvidenceService;
@@ -43,14 +44,17 @@ public class ServiceOrderController {
 
     private final ServiceOrderService serviceOrderService;
     private final VehicleRepository vehicleRepository;
+    private final MecanicoRepository mecanicoRepository;
     private final ServiceOrderEvidenceService evidenceService;
 
     public ServiceOrderController(
             ServiceOrderService serviceOrderService,
             VehicleRepository vehicleRepository,
+            MecanicoRepository mecanicoRepository,
             ServiceOrderEvidenceService evidenceService) {
         this.serviceOrderService = serviceOrderService;
         this.vehicleRepository = vehicleRepository;
+        this.mecanicoRepository = mecanicoRepository;
         this.evidenceService = evidenceService;
     }
 
@@ -158,6 +162,12 @@ public class ServiceOrderController {
         }
 
         serviceOrder.setVehicle(vehicle);
+        if ("MECHANIC".equals(mechanic.getRole())) {
+            serviceOrder.setAssignedMechanic(mecanicoRepository
+                    .findByCodigoMecanicoIgnoreCase(mechanic.getUsername())
+                    .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                            HttpStatus.UNAUTHORIZED, "La cuenta del mecánico ya no está disponible.")));
+        }
         ServiceOrder savedOrder = serviceOrderService.registerVehicleEntry(serviceOrder, mechanic.getNombre());
         return new ResponseEntity<>(savedOrder, HttpStatus.CREATED);
     }
@@ -171,6 +181,12 @@ public class ServiceOrderController {
                     if (existing.getPaymentMethod() != null) {
                         throw new org.springframework.web.server.ResponseStatusException(
                                 HttpStatus.CONFLICT, "Una orden pagada no puede modificarse.");
+                    }
+                    if (existing.getAssignedMechanic() == null && "MECHANIC".equals(mechanic.getRole())) {
+                        existing.setAssignedMechanic(mecanicoRepository
+                                .findByCodigoMecanicoIgnoreCase(mechanic.getUsername())
+                                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                                        HttpStatus.UNAUTHORIZED, "La cuenta del mecánico ya no está disponible.")));
                     }
                     String previousStatus = existing.getStatus();
                     List<ServiceTask> previousTasks = existing.getTasks() == null

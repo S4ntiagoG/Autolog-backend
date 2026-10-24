@@ -1,0 +1,94 @@
+<main class="mechanic-form-page">
+  <div class="mechanic-form-content">
+    <header class="form-page-header">
+      <div>
+        <h1>{{ mechanicId() === null ? 'Añadir Nuevo Mecánico' : 'Editar Mecánico' }}</h1>
+        <p>Registra la información y credenciales del técnico en el sistema.</p>
+      </div>
+    </header>
+
+    @if (error()) {
+      <p class="form-message" role="alert">{{ error() }}</p>
+    }
+    @if (loading()) {
+      <p class="form-message" role="status">Cargando los datos del mecánico…</p>
+    } @else if (formReady()) {
+      <form #mechanicForm="ngForm" (ngSubmit)="save(mechanicForm.valid === true)">
+        <section class="form-section">
+          <h2>♙ Información personal</h2>
+          <div class="form-grid">
+            <label class="form-field">
+              <span>Nombre completo</span>
+              <input name="fullName" required maxlength="100" [ngModel]="form().fullName" (ngModelChange)="setFormField('fullName', $event)" placeholder="Ej. Carlos Mendoza" />
+            </label>
+            <label class="form-field">
+              <span>ID / Número de documento</span>
+              <input name="documentNumber" required maxlength="30" [ngModel]="form().documentNumber" (ngModelChange)="setFormField('documentNumber', $event)" placeholder="Ej. 123456789" />
+            </label>
+            <label class="form-field">
+              <span>Número de teléfono</span>
+              <input name="phone" required maxlength="30" [ngModel]="form().phone" (ngModelChange)="setFormField('phone', $event)" placeholder="+57 300 123 4567" />
+            </label>
+            <label class="form-field">
+              <span>Correo electrónico</span>
+              <input type="email" name="email" required maxlength="254" [ngModel]="form().email" (ngModelChange)="setFormField('email', $event)" placeholder="carlos@email.com" />
+            </label>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <h2>▣ Detalles profesionales</h2>
+          <div class="form-grid form-grid--three">
+            <label class="form-field">
+              <span>Especialidad</span>
+              <select name="specialty" required [ngModel]="form().specialty" (ngModelChange)="setFormField('specialty', $event)">
+                <option value="" disabled>Seleccionar…</option>
+                @for (specialty of specialties; track specialty) {
+                  <option [value]="specialty">{{ specialty }}</option>
+                }
+              </select>
+            </label>
+            <label class="form-field">
+              <span>Nivel de experiencia</span>
+              <select name="experienceLevel" required [ngModel]="form().experienceLevel" (ngModelChange)="setFormField('experienceLevel', $event)">
+                <option value="" disabled>Seleccionar…</option>
+                @for (level of experienceLevels; track level) {
+                  <option [value]="level">{{ level }}</option>
+                }
+              </select>
+            </label>
+            <label class="form-field">
+              <span>Fecha de contratación</span>
+              <input type="date" name="hireDate" required [ngModel]="form().hireDate" (ngModelChange)="setFormField('hireDate', $event)" />
+            </label>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <h2>⌑ Credenciales de acceso</h2>
+          <div class="form-grid">
+            <label class="form-field">
+              <span>Correo de acceso (usuario)</span>
+              <input type="email" name="accessEmail" required maxlength="254" [ngModel]="form().accessEmail" (ngModelChange)="setFormField('accessEmail', $event)" placeholder="mecanico@autolog.com" />
+              <small>Utilice el correo asignado para iniciar sesión.</small>
+            </label>
+            <label class="form-field">
+              <span>{{ mechanicId() === null ? 'Contraseña de acceso' : 'Nueva contraseña (opcional)' }}</span>
+              <input type="password" name="password" [required]="mechanicId() === null" minlength="8" maxlength="72" autocomplete="new-password" [ngModel]="form().password" (ngModelChange)="setFormField('password', $event)" [placeholder]="mechanicId() === null ? 'Mínimo 8 caracteres' : 'Dejar en blanco para conservarla'" />
+              <small>{{ mechanicId() === null ? 'El administrador define la contraseña de acceso.' : 'Déjala vacía para conservar la contraseña actual.' }}</small>
+            </label>
+          </div>
+        </section>
+
+        <footer class="form-actions">
+          <button type="submit" class="primary-button" [disabled]="mechanicForm.invalid || saving()">
+            {{ saving() ? 'Guardando…' : (mechanicId() === null ? 'Guardar mecánico' : 'Guardar cambios') }}
+          </button>
+          <button type="button" class="secondary-button" (click)="cancel()" [disabled]="saving()">Cancelar</button>
+        </footer>
+      </form>
+    } @else {
+      <button type="button" class="secondary-button" (click)="cancel()">Volver al directorio</button>
+    }
+  </div>
+</main>

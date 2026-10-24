@@ -6,8 +6,10 @@ import {
   ClientVehicleHomeResponse,
   PaymentMethod,
   PAYMENT_METHOD_LABELS,
-  ServiceOrderResponse
+  ServiceOrderResponse,
+  WorkshopSettings
 } from '../../../core/models/api.models';
+import { WorkshopSettingsService } from '../../../core/services/workshop-settings.service';
 import { ClientPortalService } from '../client-portal/client-portal.service';
 
 interface EvidenceImage {
@@ -26,8 +28,11 @@ interface EvidenceImage {
 export class ClientServiceOrderDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly portal = inject(ClientPortalService);
+  private readonly settingsService = inject(WorkshopSettingsService);
 
   readonly order = signal<ServiceOrderResponse | null>(null);
+  readonly workshopSettings = signal<WorkshopSettings | null>(null);
+  readonly settingsError = signal('');
   readonly loading = signal(true);
   readonly error = signal('');
   readonly selectedEvidence = signal<EvidenceImage['slot']>('front');
@@ -67,13 +72,19 @@ export class ClientServiceOrderDetailComponent implements OnInit {
   readonly calculatedTotal = computed(() => this.roundCurrency(
     this.partsSubtotal() + this.laborSubtotal()
   ));
-  readonly includedVat = computed(() => this.roundCurrency(this.calculatedTotal() * 19 / 119));
+  readonly includedVat = computed(() => {
+    const vatPercentage = this.workshopSettings()?.vatPercentage;
+    return vatPercentage === undefined
+      ? 0
+      : this.roundCurrency(this.calculatedTotal() * vatPercentage / (100 + vatPercentage));
+  });
   readonly totalPaid = computed(() => this.calculatedTotal());
   readonly partsShare = computed(() =>
     this.totalPaid() === 0 ? 0 : this.roundCurrency((this.partsSubtotal() / this.totalPaid()) * 100)
   );
 
   ngOnInit(): void {
+    this.loadWorkshopSettings();
     const orderId = Number(this.route.snapshot.paramMap.get('id'));
     if (!Number.isInteger(orderId) || orderId < 1) {
       this.error.set('El número de orden no es válido.');
@@ -122,11 +133,16 @@ export class ClientServiceOrderDetailComponent implements OnInit {
     if (amount === null || amount === undefined) {
       return 'Sin costo registrado';
     }
+    const currency = this.workshopSettings()?.currency ?? 'COP';
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
-      currency: 'COP',
-      maximumFractionDigits: 0
+      currency,
+      maximumFractionDigits: currency === 'COP' ? 0 : 2
     }).format(amount);
+  }
+
+  vatPercentage(): number {
+    return this.workshopSettings()?.vatPercentage ?? 0;
   }
 
   paymentMethodLabel(method: PaymentMethod | null | undefined): string {
@@ -166,5 +182,15 @@ export class ClientServiceOrderDetailComponent implements OnInit {
 
   private roundCurrency(value: number): number {
     return Math.round((value + Number.EPSILON) * 100) / 100;
+  }
+
+  private loadWorkshopSettings(): void {
+    this.settingsService.getSettings().subscribe({
+      next: (settings) => this.workshopSettings.set(settings),
+      error: (error: unknown) => {
+        console.error('Error cargando la configuración financiera para la factura:', error);
+        this.settingsError.set('No se pudo cargar la configuración financiera de la factura.');
+      }
+    });
   }
 }

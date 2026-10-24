@@ -203,12 +203,12 @@
           <dl class="cost-lines">
             <div><dt>Repuestos e insumos</dt><dd>{{ formatCurrency(partsSubtotal()) }}</dd></div>
             <div><dt>Mano de obra</dt><dd>{{ formatCurrency(laborSubtotal()) }}</dd></div>
-            <div><dt>IVA incluido (19%)</dt><dd>{{ formatCurrency(includedVat()) }}</dd></div>
+            <div><dt>IVA incluido ({{ vatPercentage() }}%)</dt><dd>{{ formatCurrency(includedVat()) }}</dd></div>
           </dl>
           <div class="parts-share">
             Los repuestos e insumos representan <strong>{{ partsShare() | number:'1.0-2' }}%</strong> del total.
           </div>
-          <div class="invoice-tax-note">El IVA (19%) ya está incluido en los precios ingresados y no se suma al total.</div>
+          <div class="invoice-tax-note">El IVA ({{ vatPercentage() }}%) ya está incluido en los precios ingresados y no se suma al total.</div>
           <div class="total-line"><span>Total</span><strong>{{ formatCurrency(total()) }}</strong></div>
           @if (order()?.paymentMethod; as paymentMethod) {
             <div class="total-line">
@@ -282,12 +282,15 @@
         <dl class="invoice-totals">
           <div><dt>Repuestos e insumos</dt><dd>{{ formatCurrency(partsSubtotal()) }}</dd></div>
           <div><dt>Mano de obra</dt><dd>{{ formatCurrency(laborSubtotal()) }}</dd></div>
-          <div><dt>IVA incluido (19%)</dt><dd>{{ formatCurrency(includedVat()) }}</dd></div>
+          <div><dt>IVA incluido ({{ vatPercentage() }}%)</dt><dd>{{ formatCurrency(includedVat()) }}</dd></div>
           <div><dt>Porcentaje de la factura en repuestos e insumos</dt><dd>{{ partsShare() | number:'1.0-2' }}%</dd></div>
           <div><dt>Medio de pago</dt><dd>{{ paymentMethodLabel(order()?.paymentMethod) }}</dd></div>
           <div class="invoice-grand-total"><dt>Total</dt><dd>{{ formatCurrency(total()) }}</dd></div>
         </dl>
-        <p class="invoice-iva-note">El IVA (19%) está incluido en los precios ingresados. El valor mostrado ya está dentro del total y no se adiciona por separado.</p>
+        <p class="invoice-iva-note">El IVA ({{ vatPercentage() }}%) está incluido en los precios ingresados. El valor mostrado ya está dentro del total y no se adiciona por separado.</p>
+        @if (workshopSettings()?.invoiceNote) {
+          <p class="invoice-iva-note">{{ workshopSettings()?.invoiceNote }}</p>
+        }
         <footer class="invoice-actions">
           <button type="button" class="secondary-button" (click)="closeInvoice()">Cerrar</button>
           <button type="button" class="primary-button" (click)="printInvoiceDocument()">Imprimir factura</button>

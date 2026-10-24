@@ -1,0 +1,111 @@
+<main class="mechanics-page">
+  <div class="mechanics-page__content">
+    <header class="mechanics-header">
+      <div>
+        <p class="eyebrow">CICLO MOTOR by AUTOLOG</p>
+        <h1>Gestión de Mecánicos</h1>
+        <p>Supervisión del personal, especialidades y asignaciones actuales.</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="secondary-button" (click)="loadMechanics()" [disabled]="loading()">
+          Actualizar
+        </button>
+        <button type="button" class="primary-button" (click)="openCreateForm()">
+          <span aria-hidden="true">+</span> Añadir mecánico
+        </button>
+      </div>
+    </header>
+
+    @if (error()) {
+      <p class="message message--error" role="alert">{{ error() }}</p>
+    }
+    @if (success()) {
+      <p class="message message--success" role="status">{{ success() }}</p>
+    }
+
+    <section class="summary-grid" aria-label="Resumen del personal">
+      <article class="summary-card">
+        <span>Total mecánicos</span>
+        <strong>{{ totalMechanics() }}</strong>
+      </article>
+      <article class="summary-card summary-card--busy">
+        <span>Activos (ocupados)</span>
+        <strong>{{ occupiedMechanics() }} <small>En servicio</small></strong>
+      </article>
+      <article class="summary-card summary-card--available">
+        <span>Disponibles</span>
+        <strong>{{ availableMechanics() }} <small>Listos para asignar</small></strong>
+      </article>
+    </section>
+
+    <section class="directory-card">
+      <div class="directory-heading">
+        <h2><span aria-hidden="true">♙</span> Directorio del Personal</h2>
+      </div>
+
+      @if (loading()) {
+        <p class="empty-state" role="status">Cargando directorio de mecánicos…</p>
+      } @else if (mechanics().length === 0) {
+        <p class="empty-state">Aún no hay mecánicos registrados. Usa “Añadir mecánico” para crear el primer registro.</p>
+      } @else {
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Mecánico / especialidad</th>
+                <th>Contacto / experiencia</th>
+                <th>Disponibilidad y vehículo</th>
+                <th class="actions-heading">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (mechanic of mechanics(); track mechanic.id) {
+                <tr>
+                  <td>
+                    <div class="person-cell">
+                      <span class="person-icon" aria-hidden="true">♙</span>
+                      <span>
+                        <strong>{{ mechanic.fullName }}</strong>
+                        <small>{{ mechanic.specialty || 'Especialidad no registrada' }} · {{ mechanic.experienceLevel || 'Experiencia no registrada' }}</small>
+                        <small>Acceso: {{ mechanic.accessEmail }}</small>
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <span>{{ mechanic.phone || 'Sin teléfono' }}</span>
+                    <small>{{ mechanic.email || 'Sin correo personal' }}</small>
+                    <small>Contratación: {{ mechanic.hireDate ? (mechanic.hireDate | date:'dd/MM/yyyy') : 'No registrada' }}</small>
+                  </td>
+                  <td>
+                    @if (mechanic.available) {
+                      <span class="status-badge status-badge--available">Disponible</span>
+                    } @else {
+                      <span class="status-badge status-badge--busy">Ocupado</span>
+                      @for (assignment of mechanic.assignments; track assignment.serviceOrderId) {
+                        <small class="assignment-detail">
+                          {{ assignment.vehicleDescription }} · {{ assignment.plate }} · {{ assignment.status }}
+                        </small>
+                      }
+                    }
+                  </td>
+                  <td class="row-actions">
+                    <button type="button" class="icon-button" (click)="openEditForm(mechanic)" [attr.aria-label]="'Editar ' + mechanic.fullName" title="Editar mecánico">✎</button>
+                    <button
+                      type="button"
+                      class="icon-button icon-button--danger"
+                      (click)="deleteMechanic(mechanic)"
+                      [disabled]="!mechanic.deletable || deletingId() === mechanic.id"
+                      [attr.aria-label]="'Eliminar ' + mechanic.fullName"
+                      [title]="!mechanic.deletable ? 'No se puede eliminar porque tiene órdenes de servicio vinculadas' : 'Eliminar mecánico'"
+                    >⌫</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      <p class="directory-note">La asignación comienza cuando el mecánico registra el ingreso o guarda el trabajo. Se libera al registrarse el pago simulado del cliente. Este tablero se actualiza cada 15 segundos.</p>
+    </section>
+  </div>
+</main>

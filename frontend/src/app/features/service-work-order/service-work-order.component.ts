@@ -12,8 +12,10 @@ import {
   ServicePartRequest,
   ServiceTaskRequest,
   VehicleResponse,
-  VehicleServiceStatus
+  VehicleServiceStatus,
+  WorkshopSettings
 } from '../../core/models/api.models';
+import { WorkshopSettingsService } from '../../core/services/workshop-settings.service';
 import { VehicleMechanicService } from '../vehicles/services/vehicle-mechanic.service';
 
 @Component({
@@ -26,9 +28,11 @@ import { VehicleMechanicService } from '../vehicles/services/vehicle-mechanic.se
 export class ServiceWorkOrderComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly mechanicService = inject(VehicleMechanicService);
+  private readonly workshopSettingsService = inject(WorkshopSettingsService);
 
   readonly vehicle = signal<VehicleResponse | null>(null);
   readonly order = signal<ServiceOrderResponse | null>(null);
+  readonly workshopSettings = signal<WorkshopSettings | null>(null);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly error = signal('');
@@ -59,7 +63,7 @@ export class ServiceWorkOrderComponent implements OnInit {
     this.roundCurrency(this.partsSubtotal() + this.laborSubtotal())
   );
   readonly includedVat = computed(() =>
-    this.roundCurrency(this.total() * 19 / 119)
+    this.roundCurrency(this.total() * this.vatPercentage() / (100 + this.vatPercentage()))
   );
   readonly partsShare = computed(() =>
     this.total() === 0 ? 0 : this.roundCurrency((this.partsSubtotal() / this.total()) * 100)
@@ -75,9 +79,10 @@ export class ServiceWorkOrderComponent implements OnInit {
 
     forkJoin({
       vehicle: this.mechanicService.getVehicle(vehicleId),
-      orders: this.mechanicService.getServiceOrders()
+      orders: this.mechanicService.getServiceOrders(),
+      settings: this.workshopSettingsService.getSettings()
     }).subscribe({
-      next: ({ vehicle, orders }) => {
+      next: ({ vehicle, orders, settings }) => {
         const existingOrder = orders
           .filter((item) => item.vehicle.id === vehicleId)
           .sort((left, right) => {
@@ -87,6 +92,7 @@ export class ServiceWorkOrderComponent implements OnInit {
 
         this.vehicle.set(vehicle);
         this.order.set(existingOrder);
+        this.workshopSettings.set(settings);
         this.loadOrder(existingOrder);
         this.loading.set(false);
       },
@@ -171,7 +177,10 @@ export class ServiceWorkOrderComponent implements OnInit {
   }
 
   addLabor(): void {
-    this.labor.update((items) => [...items, { description: '', hours: 1, rate: 0 }]);
+    this.labor.update((items) => [
+      ...items,
+      { description: '', hours: 1, rate: this.workshopSettings()?.hourlyRateCop ?? 45000 }
+    ]);
     this.success.set('');
   }
 
@@ -260,11 +269,16 @@ export class ServiceWorkOrderComponent implements OnInit {
   }
 
   formatCurrency(amount: number): string {
+    const currency = this.workshopSettings()?.currency ?? 'COP';
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
-      currency: 'COP',
-      maximumFractionDigits: 0
+      currency,
+      maximumFractionDigits: currency === 'COP' ? 0 : 2
     }).format(amount);
+  }
+
+  vatPercentage(): number {
+    return this.workshopSettings()?.vatPercentage ?? 19;
   }
 
   paymentMethodLabel(method: PaymentMethod | null | undefined): string {

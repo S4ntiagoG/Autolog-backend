@@ -221,6 +221,9 @@
                   } @else if (!hasCostBreakdown()) {
                     <p class="cost-breakdown-message">El taller aún no ha registrado el desglose de costos.</p>
                   } @else {
+                    @if (settingsError()) {
+                      <p class="cost-breakdown-message" role="status">{{ settingsError() }}</p>
+                    }
                     <table class="cost-breakdown-table">
                       <thead>
                         <tr><th scope="col">Ítem</th><th scope="col">Valor</th></tr>
@@ -243,15 +246,20 @@
                             <td>{{ formatCost(part.quantity * part.unitPrice) }}</td>
                           </tr>
                         }
-                        <tr>
-                          <td>IVA incluido (19%)</td>
-                          <td>{{ formatCost(includedVat()) }}</td>
-                        </tr>
+                        @if (workshopSettings(); as currentSettings) {
+                          <tr>
+                            <td>IVA incluido ({{ currentSettings.vatPercentage }}%)</td>
+                            <td>{{ formatCost(includedVat()) }}</td>
+                          </tr>
+                        }
                       </tbody>
                       <tfoot>
                         <tr><th scope="row">Total</th><td>{{ formatCost(costBreakdownTotal()) }}</td></tr>
                       </tfoot>
                     </table>
+                    @if (workshopSettings()?.invoiceNote) {
+                      <p class="cost-breakdown-message">{{ workshopSettings()?.invoiceNote }}</p>
+                    }
                   }
                   <button type="button" class="quote-download" (click)="downloadQuote()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">

@@ -10,8 +10,10 @@ import {
   PaymentMethod,
   PAYMENT_METHOD_LABELS,
   ServiceHistoryItem,
-  ServiceOrderResponse
+  ServiceOrderResponse,
+  WorkshopSettings
 } from '../../../core/models/api.models';
+import { WorkshopSettingsService } from '../../../core/services/workshop-settings.service';
 import { ClientPortalService } from './client-portal.service';
 
 type ClientTab = 'HISTORY' | 'TRACKING';
@@ -38,6 +40,7 @@ interface TimelineStep {
 export class ClientHomeComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly portal = inject(ClientPortalService);
+  private readonly settingsService = inject(WorkshopSettingsService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly activeTab = signal<ClientTab>('HISTORY');
@@ -46,6 +49,8 @@ export class ClientHomeComponent implements OnInit {
   readonly historyLoading = signal(false);
   readonly historyError = signal('');
   readonly latestOrderDetails = signal<ServiceOrderResponse | null>(null);
+  readonly workshopSettings = signal<WorkshopSettings | null>(null);
+  readonly settingsError = signal('');
   readonly costBreakdownError = signal('');
   readonly clientIdentificationNumber = signal('');
   readonly paymentOrderId = signal<number | null>(null);
@@ -63,9 +68,12 @@ export class ClientHomeComponent implements OnInit {
   readonly costBreakdownTotal = computed(() =>
     this.roundCurrency(this.partsSubtotal() + this.laborSubtotal())
   );
-  readonly includedVat = computed(() =>
-    this.roundCurrency(this.costBreakdownTotal() * 19 / 119)
-  );
+  readonly includedVat = computed(() => {
+    const vatPercentage = this.workshopSettings()?.vatPercentage;
+    return vatPercentage === undefined
+      ? 0
+      : this.roundCurrency(this.costBreakdownTotal() * vatPercentage / (100 + vatPercentage));
+  });
   readonly hasCostBreakdown = computed(() =>
     Boolean(this.latestOrderDetails()?.parts?.length || this.latestOrderDetails()?.labor?.length)
   );
@@ -92,6 +100,7 @@ export class ClientHomeComponent implements OnInit {
       return;
     }
     this.portal.vehicle.set(vehicle);
+    this.loadWorkshopSettings();
     const identificationNumber = history.state.clientIdentificationNumber;
     this.clientIdentificationNumber.set(
       typeof identificationNumber === 'string' ? identificationNumber : ''
@@ -186,11 +195,16 @@ export class ClientHomeComponent implements OnInit {
     if (cost === null) {
       return 'Sin costo registrado';
     }
+    const currency = this.workshopSettings()?.currency ?? 'COP';
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
-      currency: 'COP',
-      maximumFractionDigits: 0
+      currency,
+      maximumFractionDigits: currency === 'COP' ? 0 : 2
     }).format(cost);
+  }
+
+  vatPercentage(): number {
+    return this.workshopSettings()?.vatPercentage ?? 0;
   }
 
   downloadQuote(): void {
@@ -301,6 +315,18 @@ export class ClientHomeComponent implements OnInit {
         this.historyError.set('');
       }
       this.historyLoading.set(false);
+    });
+  }
+
+  private loadWorkshopSettings(): void {
+    this.settingsService.getSettings().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: (settings) => this.workshopSettings.set(settings),
+      error: (error: unknown) => {
+        console.error('Error cargando la configuración financiera para el cliente:', error);
+        this.settingsError.set('No se pudo cargar la configuración financiera de la factura.');
+      }
     });
   }
 

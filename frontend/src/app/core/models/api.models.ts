@@ -72,6 +72,60 @@ export interface WorkshopActivityResponse {
   serviceOrderId: number;
 }
 
+export type WorkshopCurrency = 'COP' | 'USD' | 'EUR';
+
+export interface WorkshopSettings {
+  hourlyRateCop: number;
+  vatPercentage: number;
+  currency: WorkshopCurrency;
+  invoiceNote: string;
+}
+
+export type MechanicSpecialty =
+  | 'Mecánica general'
+  | 'Motores'
+  | 'Frenos'
+  | 'Transmisión'
+  | 'Electricidad'
+  | 'Inyección'
+  | 'Suspensión';
+
+export type MechanicExperienceLevel = 'Junior' | 'Semi-senior' | 'Senior';
+
+export interface MechanicAssignment {
+  serviceOrderId: number;
+  plate: string;
+  vehicleDescription: string;
+  status: string;
+}
+
+export interface MechanicRecord {
+  id: number;
+  accessEmail: string;
+  fullName: string;
+  documentNumber: string | null;
+  phone: string | null;
+  email: string | null;
+  specialty: MechanicSpecialty | null;
+  experienceLevel: MechanicExperienceLevel | null;
+  hireDate: string | null;
+  available: boolean;
+  deletable: boolean;
+  assignments: MechanicAssignment[];
+}
+
+export interface MechanicRequest {
+  accessEmail: string;
+  fullName: string;
+  documentNumber: string;
+  phone: string;
+  email: string;
+  specialty: MechanicSpecialty;
+  experienceLevel: MechanicExperienceLevel;
+  hireDate: string;
+  password: string;
+}
+
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   EFECTIVO: 'Efectivo',
   TRANSFERENCIA: 'Transferencia',

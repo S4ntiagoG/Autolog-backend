@@ -99,6 +99,7 @@ public class ServiceOrderService {
         order.setPaymentMethod(paymentMethod);
         order.setPaymentRecordedAt(java.time.LocalDateTime.now());
         order.setPaymentAmount(amount);
+        order.setAssignedMechanic(null);
         ServiceOrder savedOrder = serviceOrderRepository.save(order);
         return new SimulatedPaymentResponse(
                 savedOrder.getId(),

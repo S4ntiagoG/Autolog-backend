@@ -20,6 +20,19 @@ public interface ServiceOrderRepository extends JpaRepository<ServiceOrder, Long
 
     java.util.Optional<ServiceOrder> findFirstByVehicleIdOrderByEntryDateDescIdDesc(Long vehicleId);
 
+    List<ServiceOrder> findByAssignedMechanicIsNotNullAndPaymentMethodIsNullOrderByEntryDateDescIdDesc();
+
+    boolean existsByAssignedMechanicIdAndPaymentMethodIsNull(Long mechanicId);
+
+    @Query("select distinct serviceOrder.assignedMechanic.id from ServiceOrder serviceOrder "
+            + "where serviceOrder.assignedMechanic is not null and serviceOrder.paymentMethod is null")
+    List<Long> findActiveAssignedMechanicIds();
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("update ServiceOrder serviceOrder set serviceOrder.assignedMechanic = null "
+            + "where serviceOrder.assignedMechanic.id = :mechanicId")
+    int clearMechanicAssignments(@Param("mechanicId") Long mechanicId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select serviceOrder from ServiceOrder serviceOrder where serviceOrder.id = :id")
     java.util.Optional<ServiceOrder> findByIdForUpdate(@Param("id") Long id);

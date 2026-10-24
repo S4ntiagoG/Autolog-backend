@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,8 @@ import com.autolog.backend.model.ServiceLabor;
 import com.autolog.backend.model.ServicePart;
 import com.autolog.backend.model.ServiceTask;
 import com.autolog.backend.model.PaymentMethod;
+import com.autolog.backend.model.Client;
+import com.autolog.backend.model.Mecanico;
 import com.autolog.backend.model.Vehicle;
 import com.autolog.backend.repository.ServiceOrderRepository;
 import com.autolog.backend.service.WorkshopActivityService;
@@ -155,5 +158,35 @@ class ServiceOrderServiceTest {
         assertEquals(PaymentMethod.TRANSFERENCIA, history.get(0).paymentMethod());
         assertEquals(LocalDateTime.of(2026, 10, 14, 10, 0), history.get(0).paymentRecordedAt());
         assertEquals(new BigDecimal("30.00"), history.get(0).paymentAmount());
+    }
+
+    @Test
+    void releasesAssignedMechanicWhenSimulatedPaymentIsRecorded() {
+        ServiceOrder order = new ServiceOrder();
+        order.setId(8L);
+        order.setStatus("LISTO");
+        Vehicle vehicle = new Vehicle();
+        vehicle.setPlate("ABC123");
+        Client client = new Client();
+        client.setIdentificationNumber("123456");
+        vehicle.setClient(client);
+        order.setVehicle(vehicle);
+        Mecanico mechanic = new Mecanico();
+        mechanic.setId(4L);
+        order.setAssignedMechanic(mechanic);
+        ServicePart part = new ServicePart();
+        part.setQuantity(1);
+        part.setUnitPrice(new BigDecimal("50000.00"));
+        order.setParts(List.of(part));
+        when(serviceOrderRepository.findByIdForUpdate(8L)).thenReturn(Optional.of(order));
+        when(serviceOrderRepository.save(order)).thenReturn(order);
+
+        serviceOrderService.recordSimulatedPayment(
+                8L, "ABC123", "123456", PaymentMethod.EFECTIVO);
+
+        assertEquals(PaymentMethod.EFECTIVO, order.getPaymentMethod());
+        assertEquals(new BigDecimal("50000.00"), order.getPaymentAmount());
+        assertNull(order.getAssignedMechanic());
+        verify(serviceOrderRepository).save(order);
     }
 }

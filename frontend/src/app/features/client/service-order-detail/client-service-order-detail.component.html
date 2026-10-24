@@ -146,7 +146,9 @@
             <dl class="cost-breakdown">
               <div><dt>Mano de obra</dt><dd>{{ formatCurrency(laborSubtotal()) }}</dd></div>
               <div><dt>Repuestos e insumos</dt><dd>{{ formatCurrency(partsSubtotal()) }}</dd></div>
-              <div><dt>IVA incluido (19%)</dt><dd>{{ formatCurrency(includedVat()) }}</dd></div>
+              @if (workshopSettings(); as currentSettings) {
+                <div><dt>IVA incluido ({{ currentSettings.vatPercentage }}%)</dt><dd>{{ formatCurrency(includedVat()) }}</dd></div>
+              }
               <div>
                 <dt>Medio de pago</dt>
                 <dd>{{ paymentMethodLabel(serviceOrder.paymentMethod) }}</dd>
@@ -159,7 +161,14 @@
             <div class="paid-total">
               <span>Total del servicio</span>
               <strong>{{ formatCurrency(totalPaid()) }}</strong>
-              <small>El IVA (19%) ya está incluido en los precios ingresados y no se suma nuevamente.</small>
+              @if (workshopSettings(); as currentSettings) {
+                <small>El IVA ({{ currentSettings.vatPercentage }}%) ya está incluido en los precios ingresados y no se suma nuevamente.</small>
+                @if (currentSettings.invoiceNote) {
+                  <small>{{ currentSettings.invoiceNote }}</small>
+                }
+              } @else if (settingsError()) {
+                <small role="status">{{ settingsError() }}</small>
+              }
             </div>
           </section>
         </div>
