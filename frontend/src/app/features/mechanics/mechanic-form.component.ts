@@ -145,9 +145,7 @@ export class MechanicFormComponent implements OnInit {
       },
       error: (error: unknown) => {
         console.error('Error guardando el mecánico:', error);
-        this.error.set(error instanceof HttpErrorResponse && error.status === 409
-          ? 'El correo de acceso o el documento ya está registrado.'
-          : 'No se pudo guardar el mecánico. Verifica los datos e inténtalo de nuevo.');
+        this.error.set(this.getSaveErrorMessage(error));
         this.saving.set(false);
       }
     });
@@ -169,5 +167,28 @@ export class MechanicFormComponent implements OnInit {
       hireDate: mechanic.hireDate ?? '',
       password: ''
     });
+  }
+
+  private getSaveErrorMessage(error: unknown): string {
+    if (!(error instanceof HttpErrorResponse)) {
+      return 'No se pudo guardar el mecánico. Inténtalo de nuevo.';
+    }
+
+    switch (error.status) {
+      case 0:
+        return 'No se pudo conectar con el servidor. Verifica que el backend esté activo e inténtalo de nuevo.';
+      case 400:
+        return 'El servidor rechazó uno de los campos. Verifica que los correos tengan un formato válido y que los campos obligatorios estén completos.';
+      case 401:
+        return 'La sesión expiró. Inicia sesión nuevamente como administrador.';
+      case 403:
+        return 'El servidor rechazó la solicitud. Verifica que tu sesión de administrador siga activa e inténtalo de nuevo.';
+      case 409:
+        return 'El correo de acceso o el documento ya está registrado.';
+      default:
+        return error.status >= 500
+          ? `El servidor no pudo guardar el mecánico (error ${error.status}). Revisa el backend e inténtalo de nuevo.`
+          : `No se pudo guardar el mecánico (error ${error.status}). Revisa los datos e inténtalo de nuevo.`;
+    }
   }
 }
