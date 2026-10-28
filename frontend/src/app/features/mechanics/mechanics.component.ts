@@ -5,13 +5,14 @@ import { EMPTY, catchError, switchMap, timer } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
+import { AutoDismissDirective } from '../../core/directives/auto-dismiss.directive';
 import { MechanicRecord } from '../../core/models/api.models';
 import { MechanicManagementService } from '../../core/services/mechanic-management.service';
 
 @Component({
   selector: 'app-mechanics',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AutoDismissDirective],
   templateUrl: './mechanics.component.html',
   styleUrl: './mechanics.component.css'
 })

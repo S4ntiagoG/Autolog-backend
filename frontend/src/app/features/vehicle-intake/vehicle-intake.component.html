@@ -44,12 +44,12 @@
     </header>
 
     @if (successMessage()) {
-      <div role="status" class="mb-6 rounded-xl border border-emerald-800 bg-emerald-950/50 p-4 text-sm text-emerald-200">
+      <div role="status" class="mb-6 rounded-xl border border-emerald-800 bg-emerald-950/50 p-4 text-sm text-emerald-200" [appAutoDismiss]="successMessage()" (appAutoDismissExpired)="successMessage.set('')">
         {{ successMessage() }}
       </div>
     }
     @if (errorMessage()) {
-      <div role="alert" class="mb-6 rounded-xl border border-red-900 bg-red-950/50 p-4 text-sm text-red-200">
+      <div role="alert" class="mb-6 rounded-xl border border-red-900 bg-red-950/50 p-4 text-sm text-red-200" [appAutoDismiss]="errorMessage()" (appAutoDismissExpired)="errorMessage.set('')">
         {{ errorMessage() }}
       </div>
     }
@@ -223,7 +223,7 @@
             <span class="mt-1 text-xs text-neutral-500">JPG, PNG o WebP · máximo 10 MB por imagen</span>
             <input #fileInput type="file" class="hidden" accept="image/jpeg,image/png,image/webp" multiple (change)="onFileSelected($event)" />
           </button>
-          @if (evidenceMessage()) { <p class="mt-3 text-sm text-amber-300">{{ evidenceMessage() }}</p> }
+          @if (evidenceMessage()) { <p class="mt-3 text-sm text-amber-300" [appAutoDismiss]="evidenceMessage()" (appAutoDismissExpired)="evidenceMessage.set('')">{{ evidenceMessage() }}</p> }
 
           @if (selectedImages().length > 0) {
             <div class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">

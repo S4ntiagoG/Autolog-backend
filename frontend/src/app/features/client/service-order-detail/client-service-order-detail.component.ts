@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
+import { AutoDismissDirective } from '../../../core/directives/auto-dismiss.directive';
 import {
   ClientVehicleHomeResponse,
   PaymentMethod,
@@ -21,7 +22,7 @@ interface EvidenceImage {
 @Component({
   selector: 'app-client-service-order-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, AutoDismissDirective],
   templateUrl: './client-service-order-detail.component.html',
   styleUrl: './client-service-order-detail.component.css'
 })

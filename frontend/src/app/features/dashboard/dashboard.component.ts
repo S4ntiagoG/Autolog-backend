@@ -3,6 +3,7 @@ import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { RouterLink } from '@angular/router';
 
+import { AutoDismissDirective } from '../../core/directives/auto-dismiss.directive';
 import {
   PaymentMethod,
   PAYMENT_METHOD_LABELS,
@@ -22,7 +23,7 @@ interface ActivityItem {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, AutoDismissDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })

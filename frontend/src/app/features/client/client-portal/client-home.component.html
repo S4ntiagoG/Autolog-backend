@@ -68,7 +68,7 @@
             @if (historyLoading()) {
               <p class="mt-5 text-xs text-neutral-500">Cargando historial...</p>
             } @else if (historyError()) {
-              <p class="mt-5 rounded-sm border border-red-900 bg-red-950/40 p-3 text-xs text-red-200" role="alert">{{ historyError() }}</p>
+              <p class="mt-5 rounded-sm border border-red-900 bg-red-950/40 p-3 text-xs text-red-200" role="alert" [appAutoDismiss]="historyError()" (appAutoDismissExpired)="historyError.set('')">{{ historyError() }}</p>
             } @else if (historyItems().length === 0) {
               <p class="mt-5 text-xs text-neutral-500">Aún no hay mantenimientos registrados para este vehículo.</p>
             } @else {
@@ -134,19 +134,19 @@
                             </button>
                             <small>Simulación: no se realizará ningún cobro real.</small>
                             @if (!clientIdentificationNumber()) {
-                              <small role="alert">Vuelve a consultar el vehículo para validar tu identidad.</small>
+                              <small role="alert" [appAutoDismiss]="'client-identity-validation'">Vuelve a consultar el vehículo para validar tu identidad.</small>
                             }
                           </div>
                         }
                       } @else if (paymentSuccessOrderId() === item.serviceOrderId) {
-                        <span class="payment-method-label">Medio de pago guardado.</span>
+                        <span class="payment-method-label" role="status" [appAutoDismiss]="item.serviceOrderId.toString()" (appAutoDismissExpired)="paymentSuccessOrderId.set(null)">Medio de pago guardado.</span>
                       }
                     </div>
                   </article>
                 }
               </div>
               @if (paymentError()) {
-                <p class="cost-breakdown-message" role="alert">{{ paymentError() }}</p>
+                <p class="cost-breakdown-message" role="alert" [appAutoDismiss]="paymentError()" (appAutoDismissExpired)="paymentError.set('')">{{ paymentError() }}</p>
               }
             }
           } @else {
@@ -215,14 +215,14 @@
                     <h3 id="cost-breakdown-title">Desglose de Costos</h3>
                   </div>
                   @if (costBreakdownError()) {
-                    <p class="cost-breakdown-message" role="status">{{ costBreakdownError() }}</p>
+                    <p class="cost-breakdown-message" role="status" [appAutoDismiss]="costBreakdownError()" (appAutoDismissExpired)="costBreakdownError.set('')">{{ costBreakdownError() }}</p>
                   } @else if (!latestOrderDetails()) {
                     <p class="cost-breakdown-message">Cargando el desglose de costos…</p>
                   } @else if (!hasCostBreakdown()) {
                     <p class="cost-breakdown-message">El taller aún no ha registrado el desglose de costos.</p>
                   } @else {
                     @if (settingsError()) {
-                      <p class="cost-breakdown-message" role="status">{{ settingsError() }}</p>
+                      <p class="cost-breakdown-message" role="status" [appAutoDismiss]="settingsError()" (appAutoDismissExpired)="settingsError.set('')">{{ settingsError() }}</p>
                     }
                     <table class="cost-breakdown-table">
                       <thead>
@@ -271,7 +271,7 @@
                 </section>
               </div>
               @if (historyError()) {
-                <p class="mt-3 text-xs text-amber-300" role="status">{{ historyError() }}</p>
+                <p class="mt-3 text-xs text-amber-300" role="status" [appAutoDismiss]="historyError()" (appAutoDismissExpired)="historyError.set('')">{{ historyError() }}</p>
               }
             } @else {
               <p class="mt-4 text-xs text-neutral-500">El seguimiento estará disponible cuando el taller registre una orden para este vehículo.</p>

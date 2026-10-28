@@ -5,6 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map, switchMap } from 'rxjs';
 
+import { AutoDismissDirective } from '../../core/directives/auto-dismiss.directive';
 import { ServiceOrderResponse, VehicleIntakeDraft, VehicleResponse } from '../../core/models/api.models';
 import { colombianPlateValidator } from '../../core/colombian-plate.validator';
 import {
@@ -25,7 +26,7 @@ interface SelectedImage {
 @Component({
   selector: 'app-vehicle-intake',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, AutoDismissDirective],
   templateUrl: './vehicle-intake.component.html',
   styleUrl: './vehicle-intake.component.css'
 })

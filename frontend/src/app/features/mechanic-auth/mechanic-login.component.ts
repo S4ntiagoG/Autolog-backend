@@ -4,12 +4,13 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
+import { AutoDismissDirective } from '../../core/directives/auto-dismiss.directive';
 import { MechanicAuthService } from './mechanic-auth.service';
 
 @Component({
   selector: 'app-mechanic-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, AutoDismissDirective],
   templateUrl: './mechanic-login.component.html',
   styleUrl: '../client/client-search/client-vehicle-search.component.css'
 })

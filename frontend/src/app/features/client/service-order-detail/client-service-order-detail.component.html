@@ -24,7 +24,7 @@
     @if (loading()) {
       <p class="message-card" role="status">Cargando el detalle del servicio…</p>
     } @else if (error()) {
-      <p class="message-card message-card--error" role="alert">{{ error() }}</p>
+      <p class="message-card message-card--error" role="alert" [appAutoDismiss]="error()" (appAutoDismissExpired)="error.set('')">{{ error() }}</p>
     } @else if (order(); as serviceOrder) {
       <section class="order-heading">
         <div>
@@ -167,7 +167,7 @@
                   <small>{{ currentSettings.invoiceNote }}</small>
                 }
               } @else if (settingsError()) {
-                <small role="status">{{ settingsError() }}</small>
+                <small role="status" [appAutoDismiss]="settingsError()" (appAutoDismissExpired)="settingsError.set('')">{{ settingsError() }}</small>
               }
             </div>
           </section>

@@ -149,6 +149,12 @@
   font-size: 12px;
 }
 
+.form-message--success {
+  border-color: #15803d;
+  background: #052e16;
+  color: #bbf7d0;
+}
+
 @media (max-width: 640px) {
   .mechanic-form-page {
     padding: 14px;

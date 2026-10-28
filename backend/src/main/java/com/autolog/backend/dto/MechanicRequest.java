@@ -10,9 +10,9 @@ import jakarta.validation.constraints.Size;
 
 public record MechanicRequest(
         @NotBlank @Email @Size(max = 254) String accessEmail,
-        @NotBlank @Size(max = 100) String fullName,
-        @NotBlank @Size(max = 30) String documentNumber,
-        @NotBlank @Size(max = 30) String phone,
+        @NotBlank @Pattern(regexp = "^(?=.*\\p{L})[\\p{L}\\p{M} ]{3,100}$") String fullName,
+        @NotBlank @Pattern(regexp = "[0-9]{3,10}") String documentNumber,
+        @NotBlank @Pattern(regexp = "[0-9]{10}") String phone,
         @NotBlank @Email @Size(max = 254) String email,
         @NotBlank @Pattern(regexp = "Mecánica general|Motores|Frenos|Transmisión|Electricidad|Inyección|Suspensión")
         String specialty,

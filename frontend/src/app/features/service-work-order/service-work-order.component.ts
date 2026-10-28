@@ -3,6 +3,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
+import { AutoDismissDirective } from '../../core/directives/auto-dismiss.directive';
 import {
   ServiceLaborRequest,
   ServiceOrderRequest,
@@ -21,7 +22,7 @@ import { VehicleMechanicService } from '../vehicles/services/vehicle-mechanic.se
 @Component({
   selector: 'app-service-work-order',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, AutoDismissDirective],
   templateUrl: './service-work-order.component.html',
   styleUrl: './service-work-order.component.css'
 })

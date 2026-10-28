@@ -4,6 +4,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
+import { AutoDismissDirective } from '../../core/directives/auto-dismiss.directive';
 import {
   MechanicExperienceLevel,
   MechanicRecord,
@@ -39,11 +40,12 @@ const EMPTY_FORM: MechanicForm = {
 @Component({
   selector: 'app-mechanic-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AutoDismissDirective],
   templateUrl: './mechanic-form.component.html',
   styleUrl: './mechanic-form.component.css'
 })
 export class MechanicFormComponent implements OnInit {
+  private readonly fullNamePattern = /^(?=.*\p{L})[\p{L}\p{M} ]{3,100}$/u;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly mechanicService = inject(MechanicManagementService);
@@ -54,6 +56,8 @@ export class MechanicFormComponent implements OnInit {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal('');
+  readonly success = signal('');
+  private originalForm: MechanicForm | null = null;
   readonly specialties: MechanicSpecialty[] = [
     'Mecánica general', 'Motores', 'Frenos', 'Transmisión', 'Electricidad', 'Inyección', 'Suspensión'
   ];
@@ -94,12 +98,17 @@ export class MechanicFormComponent implements OnInit {
   }
 
   setFormField(field: keyof MechanicForm, value: string): void {
+    this.error.set('');
+    this.success.set('');
     this.form.update((form) => {
       switch (field) {
         case 'accessEmail': return { ...form, accessEmail: value };
-        case 'fullName': return { ...form, fullName: value };
-        case 'documentNumber': return { ...form, documentNumber: value };
-        case 'phone': return { ...form, phone: value };
+        case 'fullName':
+          return { ...form, fullName: value.replace(/[^\p{L}\p{M} ]/gu, '').slice(0, 100) };
+        case 'documentNumber':
+          return { ...form, documentNumber: value.replace(/[^0-9]/g, '').slice(0, 10) };
+        case 'phone':
+          return { ...form, phone: value.replace(/[^0-9]/g, '').slice(0, 10) };
         case 'email': return { ...form, email: value };
         case 'specialty':
           return { ...form, specialty: this.specialties.find((item) => item === value) ?? '' };
@@ -112,12 +121,25 @@ export class MechanicFormComponent implements OnInit {
     });
   }
 
+  isPersonalInformationValid(): boolean {
+    const { fullName, documentNumber, phone } = this.form();
+    return this.fullNamePattern.test(fullName) &&
+      /^[0-9]{3,10}$/.test(documentNumber) &&
+      /^[0-9]{10}$/.test(phone);
+  }
+
   save(formIsValid: boolean): void {
     const values = this.form();
     const id = this.mechanicId();
-    if (!formIsValid || this.saving() || this.loading() ||
+    if (!formIsValid || !this.isPersonalInformationValid() || this.saving() || this.loading() ||
         !values.specialty || !values.experienceLevel ||
         (id === null && values.password.length < 8)) {
+      return;
+    }
+
+    if (id !== null && !this.hasFormChanged(values)) {
+      this.error.set('');
+      this.success.set('No hubo cambios detectados');
       return;
     }
 
@@ -167,6 +189,27 @@ export class MechanicFormComponent implements OnInit {
       hireDate: mechanic.hireDate ?? '',
       password: ''
     });
+    this.originalForm = { ...this.form() };
+  }
+
+  private hasFormChanged(form: MechanicForm): boolean {
+    const originalForm = this.originalForm;
+    if (!originalForm) {
+      return false;
+    }
+
+    const fields: (keyof MechanicForm)[] = [
+      'accessEmail',
+      'fullName',
+      'documentNumber',
+      'phone',
+      'email',
+      'specialty',
+      'experienceLevel',
+      'hireDate',
+      'password'
+    ];
+    return fields.some((field) => form[field] !== originalForm[field]);
   }
 
   private getSaveErrorMessage(error: unknown): string {

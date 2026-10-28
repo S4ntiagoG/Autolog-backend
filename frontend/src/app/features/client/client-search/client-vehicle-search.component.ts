@@ -4,13 +4,14 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
+import { AutoDismissDirective } from '../../../core/directives/auto-dismiss.directive';
 import { colombianPlateValidator } from '../../../core/colombian-plate.validator';
 import { ClientPortalService } from '../client-portal/client-portal.service';
 
 @Component({
   selector: 'app-client-vehicle-search',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, AutoDismissDirective],
   templateUrl: './client-vehicle-search.component.html',
   styleUrl: './client-vehicle-search.component.css'
 })

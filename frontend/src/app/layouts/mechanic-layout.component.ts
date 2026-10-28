@@ -2,12 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
+import { AutoDismissDirective } from '../core/directives/auto-dismiss.directive';
 import { MechanicAuthService } from '../features/mechanic-auth/mechanic-auth.service';
 
 @Component({
   selector: 'app-mechanic-layout',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, AutoDismissDirective],
   templateUrl: './mechanic-layout.component.html',
   styleUrl: './mechanic-layout.component.css'
 })

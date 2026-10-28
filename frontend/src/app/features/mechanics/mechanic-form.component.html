@@ -8,7 +8,10 @@
     </header>
 
     @if (error()) {
-      <p class="form-message" role="alert">{{ error() }}</p>
+      <p class="form-message" role="alert" [appAutoDismiss]="error()" (appAutoDismissExpired)="error.set('')">{{ error() }}</p>
+    }
+    @if (success()) {
+      <p class="form-message form-message--success" role="status" [appAutoDismiss]="success()" (appAutoDismissExpired)="success.set('')">{{ success() }}</p>
     }
     @if (loading()) {
       <p class="form-message" role="status">Cargando los datos del mecánico…</p>
@@ -19,15 +22,18 @@
           <div class="form-grid">
             <label class="form-field">
               <span>Nombre completo</span>
-              <input name="fullName" required maxlength="100" [ngModel]="form().fullName" (ngModelChange)="setFormField('fullName', $event)" placeholder="Ej. Carlos Mendoza" />
+              <input name="fullName" required minlength="3" maxlength="100" [ngModel]="form().fullName" (ngModelChange)="setFormField('fullName', $event)" placeholder="Ej. Carlos Mendoza" />
+              <small>Solo letras y espacios; mínimo 3 caracteres.</small>
             </label>
             <label class="form-field">
               <span>ID / Número de documento</span>
-              <input name="documentNumber" required maxlength="30" [ngModel]="form().documentNumber" (ngModelChange)="setFormField('documentNumber', $event)" placeholder="Ej. 123456789" />
+              <input type="text" inputmode="numeric" name="documentNumber" required minlength="3" maxlength="10" pattern="[0-9]*" [ngModel]="form().documentNumber" (ngModelChange)="setFormField('documentNumber', $event)" placeholder="Ej. 123456789" />
+              <small>Solo números; mínimo 3 y máximo 10.</small>
             </label>
             <label class="form-field">
               <span>Número de teléfono</span>
-              <input name="phone" required maxlength="30" [ngModel]="form().phone" (ngModelChange)="setFormField('phone', $event)" placeholder="+57 300 123 4567" />
+              <input type="text" inputmode="numeric" name="phone" required minlength="10" maxlength="10" pattern="[0-9]*" [ngModel]="form().phone" (ngModelChange)="setFormField('phone', $event)" placeholder="3001234567" />
+              <small>Ingresa exactamente 10 números.</small>
             </label>
             <label class="form-field">
               <span>Correo electrónico</span>
@@ -81,7 +87,7 @@
         </section>
 
         <footer class="form-actions">
-          <button type="submit" class="primary-button" [disabled]="mechanicForm.invalid || saving()">
+          <button type="submit" class="primary-button" [disabled]="mechanicForm.invalid || !isPersonalInformationValid() || saving()">
             {{ saving() ? 'Guardando…' : (mechanicId() === null ? 'Guardar mecánico' : 'Guardar cambios') }}
           </button>
           <button type="button" class="secondary-button" (click)="cancel()" [disabled]="saving()">Cancelar</button>

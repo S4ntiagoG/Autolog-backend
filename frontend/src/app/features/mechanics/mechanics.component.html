@@ -17,10 +17,10 @@
     </header>
 
     @if (error()) {
-      <p class="message message--error" role="alert">{{ error() }}</p>
+      <p class="message message--error" role="alert" [appAutoDismiss]="error()" (appAutoDismissExpired)="error.set('')">{{ error() }}</p>
     }
     @if (success()) {
-      <p class="message message--success" role="status">{{ success() }}</p>
+      <p class="message message--success" role="status" [appAutoDismiss]="success()" (appAutoDismissExpired)="success.set('')">{{ success() }}</p>
     }
 
     <section class="summary-grid" aria-label="Resumen del personal">

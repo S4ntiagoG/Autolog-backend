@@ -2,13 +2,14 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { AutoDismissDirective } from '../../core/directives/auto-dismiss.directive';
 import { WorkshopCurrency, WorkshopSettings } from '../../core/models/api.models';
 import { WorkshopSettingsService } from '../../core/services/workshop-settings.service';
 
 @Component({
   selector: 'app-workshop-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AutoDismissDirective],
   templateUrl: './workshop-settings.component.html',
   styleUrl: './workshop-settings.component.css'
 })
@@ -40,6 +41,11 @@ export class WorkshopSettingsComponent implements OnInit {
 
     this.error.set('');
     this.success.set('');
+    if (this.savedSettings && !this.hasSettingsChanged(settings)) {
+      this.success.set('No hubo cambios detectados');
+      return;
+    }
+
     this.saving.set(true);
     this.settingsService.updateSettings(settings).subscribe({
       next: (savedSettings) => {
@@ -63,6 +69,11 @@ export class WorkshopSettingsComponent implements OnInit {
     this.success.set('');
   }
 
+  clearMessages(): void {
+    this.error.set('');
+    this.success.set('');
+  }
+
   private loadSettings(): void {
     this.settingsService.getSettings().subscribe({
       next: (settings) => {
@@ -80,5 +91,15 @@ export class WorkshopSettingsComponent implements OnInit {
   private setSettings(settings: WorkshopSettings): void {
     this.savedSettings = { ...settings };
     this.settings.set({ ...settings });
+  }
+
+  private hasSettingsChanged(settings: WorkshopSettings): boolean {
+    const savedSettings = this.savedSettings;
+    return savedSettings !== null && (
+      settings.hourlyRateCop !== savedSettings.hourlyRateCop ||
+      settings.vatPercentage !== savedSettings.vatPercentage ||
+      settings.currency !== savedSettings.currency ||
+      settings.invoiceNote !== savedSettings.invoiceNote
+    );
   }
 }

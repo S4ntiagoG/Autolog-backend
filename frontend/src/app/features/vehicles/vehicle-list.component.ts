@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
+import { AutoDismissDirective } from '../../core/directives/auto-dismiss.directive';
 import { MechanicVehicleItem, VehicleStatus } from './models/vehicle-mechanic.models';
 import { VehicleMechanicService } from './services/vehicle-mechanic.service';
 
@@ -13,7 +14,7 @@ interface ActionModalData {
 @Component({
   selector: 'app-vehicle-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, AutoDismissDirective],
   templateUrl: './vehicle-list.component.html',
   styleUrl: './vehicle-list.component.css'
 })
@@ -120,7 +121,7 @@ export class VehicleListComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error eliminando vehículo:', err);
-        alert('No se pudo eliminar el vehículo. Si tiene órdenes de servicio asociadas, deben removerse primero.');
+        this.error.set('No se pudo eliminar el vehículo. Si tiene órdenes de servicio asociadas, deben removerse primero.');
       }
     });
   }

@@ -25,13 +25,13 @@
     @if (loading()) {
       <div class="message-card" role="status">Cargando datos del vehículo y la orden de servicio…</div>
     } @else if (error() && !vehicle()) {
-      <div class="message-card message-card--error" role="alert">{{ error() }}</div>
+      <div class="message-card message-card--error" role="alert" [appAutoDismiss]="error()" (appAutoDismissExpired)="error.set('')">{{ error() }}</div>
     } @else if (vehicle()) {
       @if (error()) {
-        <div class="message-card message-card--error" role="alert">{{ error() }}</div>
+        <div class="message-card message-card--error" role="alert" [appAutoDismiss]="error()" (appAutoDismissExpired)="error.set('')">{{ error() }}</div>
       }
       @if (success()) {
-        <div class="message-card message-card--success" role="status">{{ success() }}</div>
+        <div class="message-card message-card--success" role="status" [appAutoDismiss]="success()" (appAutoDismissExpired)="success.set('')">{{ success() }}</div>
       }
       @if (!order()) {
         <div class="message-card">

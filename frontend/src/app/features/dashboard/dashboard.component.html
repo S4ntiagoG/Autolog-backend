@@ -1,6 +1,6 @@
 <main class="dashboard-page">
   @if (error()) {
-    <div class="dashboard-alert">
+    <div class="dashboard-alert" role="alert" [appAutoDismiss]="error()" (appAutoDismissExpired)="error.set('')">
       {{ error() }}
     </div>
   }
@@ -119,7 +119,7 @@
           @if (activityLoading()) {
             <li class="activity-empty">Cargando actividad del taller…</li>
           } @else if (activityError()) {
-            <li class="activity-empty" role="alert">{{ activityError() }}</li>
+            <li class="activity-empty" role="alert" [appAutoDismiss]="activityError()" (appAutoDismissExpired)="activityError.set('')">{{ activityError() }}</li>
           } @else if (recentActivity().length === 0) {
             <li class="activity-empty">Aún no hay actividad registrada.</li>
           } @else {

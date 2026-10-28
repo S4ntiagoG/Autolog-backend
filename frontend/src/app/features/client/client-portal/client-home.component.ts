@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { TimeoutError, catchError, finalize, map, of, switchMap, timer, timeout } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
+import { AutoDismissDirective } from '../../../core/directives/auto-dismiss.directive';
 import {
   ClientVehicleHomeResponse,
   PaymentMethod,
@@ -33,7 +34,7 @@ interface TimelineStep {
 @Component({
   selector: 'app-client-home',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, AutoDismissDirective],
   templateUrl: './client-home.component.html',
   styleUrl: './client-home.component.css'
 })
